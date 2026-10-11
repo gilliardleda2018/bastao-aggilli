@@ -9,18 +9,26 @@
 - [ ] Validar em bancada com os brincos reais
 - [ ] Compilar e testar o app e o firmware
 
-## v0.2
+## v0.2 (atual)
 
-- [ ] Ajustar o parser ao formato real do módulo escolhido
-- [ ] Buffer de leituras no firmware quando o celular estiver desconectado
+- [x] Parser WL-134 (pacote binário de 30 bytes com checksum) + modo AUTO; ASCII15 mais rígido
+- [x] Fila offline no firmware com confirmação (ACK) do app e reenvio ao reconectar
+- [x] Testes de host do parser e da fila (`firmware/test_host`, 55 verificações)
+- [x] Simulador de brinco por serial (`tools/simulate_tag.py`) para bancada sem módulo
+- [x] App: sincronização automática com o Aggilli Agro (WorkManager, UUID, lotes, tela de configuração)
+- [x] Receptor de referência da API com testes (`integracao/`)
+- [ ] Ajustar o parser ao formato real do módulo comprado (bancada)
+- [ ] Compilar firmware e app e testar em hardware
+- [ ] Publicar a rota `/api/v1/bastao/leituras` no Aggilli Agro e emitir tokens por dispositivo
 - [ ] Primeiro modelo 3D da empunhadura e do suporte do celular
-- [ ] Tela de configuração no app (modo gatilho, janela anti-duplicata)
 
 ## v0.3
 
-- [ ] Cadastro/consulta de animais (lote, peso, vacinas) no app
-- [ ] Sincronização com o sistema Aggilli (definir API e autenticação)
+- [ ] Fila offline gravada em flash (sobrevive a desligar o bastão)
+- [ ] Baixar o cadastro do Aggilli Agro: mostrar nome/lote/último peso ao ler o brinco
+- [ ] Tipos de manejo na sessão (contagem, pesagem, vacinação, apartação)
 - [ ] Registro de GPS por sessão
+- [ ] Tela de configuração do bastão no app (janela anti-duplicata)
 
 ## Futuro
 

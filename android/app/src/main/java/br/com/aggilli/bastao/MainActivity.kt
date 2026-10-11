@@ -17,7 +17,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -26,6 +31,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -62,6 +72,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        vm.refresh()
+    }
+
     private fun requiredPermissions(): Array<String> =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
@@ -96,9 +111,60 @@ private fun connLabel(s: UiState): String = when (s.conn) {
     BleClient.ConnState.CONNECTED -> "Conectado"
 }
 
+private fun syncLabel(s: UiState): String {
+    if (!s.syncConfigured) return "Sincronização não configurada"
+    val last = if (s.lastSyncAt > 0) "última às ${timeFormat.format(Date(s.lastSyncAt))}" else "ainda não sincronizado"
+    return if (s.syncPending == 0) "Tudo enviado • $last" else "${s.syncPending} pendente(s) • $last"
+}
+
+@Composable
+fun SyncConfigDialog(vm: MainViewModel, onDismiss: () -> Unit) {
+    val c = vm.syncConfig
+    var url by remember { mutableStateOf(c.baseUrl) }
+    var token by remember { mutableStateOf(c.token) }
+    var farm by remember { mutableStateOf(c.farmId) }
+    var device by remember { mutableStateOf(c.deviceName) }
+    var auto by remember { mutableStateOf(c.autoSync) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Sincronizar com o Aggilli Agro") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = url, onValueChange = { url = it }, label = { Text("Endereço (https)") },
+                    singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                )
+                OutlinedTextField(value = farm, onValueChange = { farm = it }, label = { Text("Fazenda (ID)") }, singleLine = true)
+                OutlinedTextField(
+                    value = token, onValueChange = { token = it }, label = { Text("Token do dispositivo") },
+                    singleLine = true, visualTransformation = PasswordVisualTransformation(),
+                )
+                OutlinedTextField(value = device, onValueChange = { device = it }, label = { Text("Nome do bastão") }, singleLine = true)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Switch(checked = auto, onCheckedChange = { auto = it })
+                    Text("  Enviar automaticamente")
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = {
+                vm.saveSyncConfig(url, token, farm, device, auto)
+                onDismiss()
+            }) { Text("Salvar") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
+    )
+}
+
 @Composable
 fun Screen(vm: MainViewModel, onConnect: () -> Unit, onExport: () -> Unit) {
     val s by vm.state.collectAsStateWithLifecycle()
+    var showSyncConfig by remember { mutableStateOf(false) }
+
+    if (showSyncConfig) {
+        SyncConfigDialog(vm = vm, onDismiss = { showSyncConfig = false })
+    }
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -118,6 +184,30 @@ fun Screen(vm: MainViewModel, onConnect: () -> Unit, onExport: () -> Unit) {
                 Text(battery)
             }
             s.message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            if (s.wandPending > 0 && s.conn == BleClient.ConnState.CONNECTED) {
+                Text("Recebendo ${s.wandPending} leitura(s) guardada(s) no bastão…")
+            }
+
+            // Sincronização com o Aggilli Agro
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Aggilli Agro", fontWeight = FontWeight.Bold)
+                        Text(syncLabel(s), style = MaterialTheme.typography.bodySmall)
+                        s.syncError?.let {
+                            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                    TextButton(onClick = { vm.syncNow() }, enabled = s.syncConfigured) { Text("Enviar") }
+                    TextButton(onClick = { showSyncConfig = true }) { Text("Configurar") }
+                }
+            }
 
             // Última leitura
             Card(modifier = Modifier.fillMaxWidth()) {

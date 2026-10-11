@@ -18,6 +18,13 @@ Registre os resultados:
 |---|---|---|---|
 | | | | |
 
+### Sem módulo e sem brinco (antes da compra)
+
+- Testes do parser e da fila no PC: `cd firmware/test_host && make`.
+- ESP32 + simulador: TX de um adaptador USB-UART no GPIO16 e
+  `python tools/simulate_tag.py <porta> --count 20`. Teste também `--repeat 20` (anti-duplicata)
+  e `--corrupt` (deve aparecer `CHECKSUM_INVALIDO` na serial e nada no app).
+
 ## Etapa 2 — Firmware + BLE
 
 - [ ] O ESP32 recebe o frame e imprime o ID na serial USB.
@@ -25,6 +32,8 @@ Registre os resultados:
 - [ ] Gatilho: no modo 1, só lê com o gatilho apertado.
 - [ ] Reconexão BLE: desligar/ligar o bastão e o Bluetooth do celular.
 - [ ] Distância BLE entre bastão e celular (alcance real no suporte).
+- [ ] Fila offline: desligar o Bluetooth do celular, ler 20 brincos (bip longo), religar: as 20 chegam com o horário certo.
+- [ ] Fila cheia: mais de `QUEUE_CAPACITY` leituras offline gera o aviso de descartadas no app.
 
 ## Etapa 3 — App
 
@@ -33,6 +42,9 @@ Registre os resultados:
 - [ ] Leituras repetidas na mesma sessão marcadas como duplicadas.
 - [ ] Exportação CSV abre corretamente na planilha.
 - [ ] Nova sessão zera a lista sem apagar os dados anteriores.
+- [ ] Atualização da v0.1 para a v0.2 mantém as leituras antigas (migração do SQLite).
+- [ ] Sincronização: modo avião, ler, fechar o app, voltar a rede: as leituras chegam ao servidor sozinhas.
+- [ ] Token errado mostra erro na tela e não fica tentando para sempre.
 
 ## Etapa 4 — Campo
 

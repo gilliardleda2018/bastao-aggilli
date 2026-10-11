@@ -30,8 +30,9 @@ class BleClient(private val context: Context, private val listener: Listener) {
 
     interface Listener {
         fun onState(state: ConnState, detail: String?)
-        fun onReading(seq: Long, deviceMs: Long, tag: String)
-        fun onStatus(batteryMv: Int, triggerMode: Int, firmware: String)
+        /** ageMs: há quanto tempo o bastão fez a leitura (> 0 quando veio da fila offline). */
+        fun onReading(seq: Long, deviceMs: Long, tag: String, ageMs: Long)
+        fun onStatus(batteryMv: Int, triggerMode: Int, firmware: String, pending: Int, dropped: Long)
     }
 
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -48,6 +49,11 @@ class BleClient(private val context: Context, private val listener: Listener) {
     private var scanning = false
     private var scanTimeout: Runnable? = null
     private val notifyQueue = ArrayDeque<BluetoothGattCharacteristic>()
+
+    // Escritas no CONTROL: o Android só aceita uma operação GATT por vez, então enfileiramos.
+    private val writeQueue = ArrayDeque<String>()
+    private var writeBusy = false
+    private var pendingAck: Long? = null
 
     // ------------------------------------------------------------------ API
 
@@ -68,14 +74,54 @@ class BleClient(private val context: Context, private val listener: Listener) {
         if (g != null) g.disconnect() else post(ConnState.DISCONNECTED, null)
     }
 
-    /** Envia um comando ao bastão: "B" (bip), "M0" (modo contínuo), "M1" (modo gatilho). */
-    @Suppress("DEPRECATION")
+    /** Envia um comando ao bastão: "B" (bip), "M0" (modo contínuo), "M1" (modo gatilho), "H" (pronto). */
     fun sendControl(command: String) {
+        mainHandler.post {
+            writeQueue.addLast(command)
+            pumpWrites()
+        }
+    }
+
+    /**
+     * Confirma ao bastão que as leituras até [seq] foram gravadas no celular.
+     * ACKs seguidos são agrupados: só o maior vai para a fila.
+     */
+    fun ack(seq: Long) {
+        mainHandler.post {
+            val cur = pendingAck
+            pendingAck = if (cur == null || seq > cur) seq else cur
+            pumpWrites()
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun pumpWrites() {
+        if (writeBusy) return
         val g = gatt ?: return
         val ch = control ?: return
-        ch.value = command.toByteArray(Charsets.UTF_8)
+        val cmd = writeQueue.removeFirstOrNull()
+            ?: pendingAck?.let { pendingAck = null; "A;$it" }
+            ?: return
+        ch.value = cmd.toByteArray(Charsets.UTF_8)
         ch.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
-        g.writeCharacteristic(ch)
+        writeBusy = g.writeCharacteristic(ch)
+        if (!writeBusy) {
+            // Pilha ocupada: tenta de novo em instantes
+            if (cmd.startsWith("A;")) {
+                val seq = cmd.substring(2).toLong()
+                val cur = pendingAck
+                pendingAck = if (cur == null || seq > cur) seq else cur
+            } else {
+                writeQueue.addFirst(cmd)
+            }
+            mainHandler.postDelayed({ pumpWrites() }, 50)
+        }
+    }
+
+    private fun resetWrites() {
+        writeQueue.clear()
+        writeBusy = false
+        pendingAck = null
     }
 
     // ------------------------------------------------------- conexão / scan
@@ -174,6 +220,7 @@ class BleClient(private val context: Context, private val listener: Listener) {
             gatt = null
             control = null
             notifyQueue.clear()
+            mainHandler.post { resetWrites() }
             post(ConnState.DISCONNECTED, if (wantConnected) "Conexão perdida. Reconectando…" else null)
             if (wantConnected) {
                 failures++
@@ -205,6 +252,13 @@ class BleClient(private val context: Context, private val listener: Listener) {
             enableNext(g)
         }
 
+        override fun onCharacteristicWrite(g: BluetoothGatt, ch: BluetoothGattCharacteristic, status: Int) {
+            mainHandler.post {
+                writeBusy = false
+                pumpWrites()
+            }
+        }
+
         @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
         override fun onCharacteristicChanged(g: BluetoothGatt, ch: BluetoothGattCharacteristic) {
             val text = String(ch.value ?: return, Charsets.UTF_8)
@@ -228,6 +282,9 @@ class BleClient(private val context: Context, private val listener: Listener) {
         val next = notifyQueue.removeFirstOrNull()
         if (next == null) {
             post(ConnState.CONNECTED, null)
+            // Notificações ativas: avisa o bastão para (re)enviar as leituras não confirmadas
+            mainHandler.post { resetWrites() }
+            sendControl("H")
             return
         }
         if (!enableNotifications(g, next)) enableNext(g)
@@ -235,23 +292,27 @@ class BleClient(private val context: Context, private val listener: Listener) {
 
     // -------------------------------------------------------------- parsing
 
-    /** R;<seq>;<uptime_ms>;<id> */
+    /** R;<seq>;<uptime_ms>;<id>[;<idade_ms>]  (idade_ms a partir do firmware 0.2.0) */
     private fun parseReading(text: String) {
         val p = text.trim().split(";")
         if (p.size < 4 || p[0] != "R") return
         val seq = p[1].toLongOrNull() ?: return
         val ms = p[2].toLongOrNull() ?: return
-        val tag = p.subList(3, p.size).joinToString(";")
-        mainHandler.post { listener.onReading(seq, ms, tag) }
+        val tag = p[3]
+        if (tag.isEmpty()) return
+        val age = p.getOrNull(4)?.toLongOrNull() ?: 0L
+        mainHandler.post { listener.onReading(seq, ms, tag, age) }
     }
 
-    /** S;<bateria_mV>;<modo_gatilho>;<versao_fw> */
+    /** S;<bateria_mV>;<modo_gatilho>;<versao_fw>[;<pendentes>;<descartadas>] */
     private fun parseStatus(text: String) {
         val p = text.trim().split(";")
         if (p.size < 4 || p[0] != "S") return
         val mv = p[1].toIntOrNull() ?: return
         val mode = p[2].toIntOrNull() ?: return
-        mainHandler.post { listener.onStatus(mv, mode, p[3]) }
+        val pending = p.getOrNull(4)?.toIntOrNull() ?: 0
+        val dropped = p.getOrNull(5)?.toLongOrNull() ?: 0L
+        mainHandler.post { listener.onStatus(mv, mode, p[3], pending, dropped) }
     }
 
     private fun post(state: ConnState, detail: String?) {

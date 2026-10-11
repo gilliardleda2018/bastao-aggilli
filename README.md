@@ -16,8 +16,9 @@ conexão com o sistema. O hardware próprio faz apenas a leitura da tag e a comu
 
 1. O operador aproxima o bastão do brinco (e aperta o gatilho, se o modo gatilho estiver ativo).
 2. O módulo leitor entrega o ID por UART; o ESP32 remove repetições e envia por BLE.
-3. O app grava a leitura (SQLite local), mostra na tela e dá retorno sonoro/vibratório.
-4. As leituras podem ser exportadas em CSV e, no futuro, sincronizadas com o sistema Aggilli.
+3. O app grava a leitura (SQLite local), confirma ao bastão, mostra na tela e dá retorno sonoro/vibratório.
+4. Com internet, o app envia as leituras sozinho ao **Aggilli Agro** web (também exporta CSV).
+   Sem internet ou com o celular longe, nada se perde: o bastão e o app guardam e enviam depois.
 
 ## Estrutura do repositório
 
@@ -27,7 +28,8 @@ conexão com o sistema. O hardware próprio faz apenas a leitura da tag e a comu
 | `hardware/` | Lista de materiais em CSV (`bom.csv`) e tabela de pinos (`pinout.csv`) |
 | `firmware/` | Firmware do ESP32 (PlatformIO, framework Arduino) |
 | `android/` | App Android (Kotlin + Jetpack Compose) |
-| `tools/` | Utilitários de bancada (captura bruta da serial do módulo leitor) |
+| `integracao/` | Receptor de referência da API no Aggilli Agro (FastAPI ou biblioteca padrão) + testes |
+| `tools/` | Bancada: captura da serial do módulo e simulador de brinco |
 
 ## Por onde começar
 
@@ -37,15 +39,18 @@ conexão com o sistema. O hardware próprio faz apenas a leitura da tag e a comu
 3. Ajuste `firmware/include/config.h` (pinos, baud rate, parser) e grave o ESP32 (`firmware/README.md`).
 4. Abra a pasta `android/` no Android Studio e rode o app (`android/README.md`).
 
-## Status (v0.1.0)
+## Status (v0.2.0)
 
-Esqueleto inicial completo, **ainda não compilado nem testado em hardware**. Pontos que dependem
-da validação em bancada:
+- Parser e fila offline do firmware **testados no PC** (`firmware/test_host`); simulador validado contra o parser.
+- Receptor da API **testado** (`integracao/`).
+- Firmware e app **ainda não compilados nos toolchains reais** (PlatformIO/Android Studio) nem testados em hardware.
 
-- Formato do frame UART do módulo leitor escolhido (o parser em `firmware/src/main.cpp` é configurável).
+Pontos que dependem da bancada:
+
+- Formato do frame UART do módulo comprado (modo AUTO cobre WL-134 e ASCII decimal).
 - Alcance real da antena com os brincos do rebanho.
 - Versões de dependências (Gradle/AGP/Compose) podem precisar de ajuste conforme o Android Studio instalado.
-- A sincronização com o sistema Aggilli é apenas uma interface (`android/.../sync/SyncService.kt`); a API ainda não foi definida.
+- Publicar a rota da API no Aggilli Agro (`docs/08-integracao-aggilli-agro.md`).
 
 ## Licença
 

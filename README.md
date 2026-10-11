@@ -56,6 +56,18 @@ Brinco -> [Ponteira: antena + leitor FDX-B] -UART-> [Empunhadura: ESP32] -BLE-> 
 4. Com o leitor em mãos, confirme tensão, nível do TX e formato do frame (`docs/03` e `docs/06`).
 5. Abra `android/` no Android Studio e rode o app (`android/README.md`).
 
+## Testes automáticos (GitHub Actions)
+
+A cada push, o GitHub compila e testa tudo (`.github/workflows/ci.yml`):
+
+| Etapa | O que faz | O que gera |
+|---|---|---|
+| Firmware ESP32 | Testes da lógica no PC + compilação com PlatformIO | `firmware-esp32` (firmware.bin, bootloader.bin, partitions.bin) |
+| App Android | Compilação com Gradle | `app-bastao-debug` (APK para instalar no celular) |
+| Receptor da API | Testes do receptor e do simulador | — |
+
+Os arquivos ficam na aba **Actions** do repositório, dentro de cada execução, em **Artifacts**.
+
 ## Status (v0.3.0)
 
 - Lógica do firmware testada no computador: **125 verificações, 0 falhas** (parser, fila, diário em

@@ -2,6 +2,9 @@
 
 ## Etapa 0 — No computador (sem hardware)
 
+- [ ] Push no GitHub: a aba **Actions** mostra as 3 etapas em verde (firmware, app, receptor).
+      Baixe o APK em **Artifacts** e instale no celular.
+
 - [ ] `cd firmware/test_host && make`: deve terminar com 0 falhas (parser, fila, diário em flash,
       gatilho, bateria, datas, CSV do cartão, display).
 - [ ] `python -m unittest integracao/test_bastao_api.py`: receptor da API.

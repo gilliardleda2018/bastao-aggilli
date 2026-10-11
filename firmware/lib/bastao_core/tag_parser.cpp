@@ -15,7 +15,7 @@ namespace tagparser {
 //   [21..26] reservado/estendido (6 hex)
 //   [27]     checksum: XOR dos bytes [1..26]
 //   [28]     complemento do checksum (~checksum)
-//   [29]     ETX 0x03
+//   [29]     ETX 0x03 (alguns modulos usam 0x07)
 // CONFIRMAR em bancada com o datasheet do modulo comprado (docs/06-plano-de-testes.md).
 
 namespace {
@@ -55,7 +55,8 @@ void formatId(uint16_t country, uint64_t national, char out[16]) {
 bool isDigit(uint8_t c) { return c >= '0' && c <= '9'; }
 
 Result checkPacket(const uint8_t* p, Tag& tag, bool strict) {
-  if (p[0] != STX || p[WL134_LEN - 1] != ETX) return NOT_FOUND;
+  uint8_t end = p[WL134_LEN - 1];
+  if (p[0] != STX || (end != ETX && end != ETX_ALT)) return NOT_FOUND;
 
   uint64_t national = 0, country = 0;
   if (!hexLsbFirst(p + 1, 10, national)) return NOT_FOUND;
@@ -153,7 +154,8 @@ Result parse(Mode mode, const uint8_t* buf, size_t n, char* out, size_t outSize,
 }
 
 bool endsWithWl134(const uint8_t* buf, size_t n) {
-  return buf != nullptr && n >= WL134_LEN && buf[n - 1] == ETX && buf[n - WL134_LEN] == STX;
+  return buf != nullptr && n >= WL134_LEN && (buf[n - 1] == ETX || buf[n - 1] == ETX_ALT) &&
+         buf[n - WL134_LEN] == STX;
 }
 
 void buildWl134(uint16_t country, uint64_t national, bool animal, uint8_t out[WL134_LEN]) {

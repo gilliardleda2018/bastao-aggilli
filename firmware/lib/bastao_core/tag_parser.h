@@ -18,6 +18,7 @@ enum Mode : uint8_t {
 constexpr size_t  WL134_LEN = 30;
 constexpr uint8_t STX = 0x02;
 constexpr uint8_t ETX = 0x03;
+constexpr uint8_t ETX_ALT = 0x07;  // alguns modulos terminam com 0x07 (aceito tambem pela lib Rfid134)
 
 // Maior numero nacional possivel no ISO 11784 (38 bits)
 constexpr uint64_t NATIONAL_MAX = 274877906943ULL;

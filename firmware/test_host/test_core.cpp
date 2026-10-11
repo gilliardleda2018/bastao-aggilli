@@ -72,6 +72,17 @@ static void testWl134WithNoise() {
   CHECK(!endsWithWl134(buf, n));
 }
 
+static void testWl134AltEnd() {
+  printf("WL134: fim de pacote 0x07 (variante de alguns modulos)\n");
+  uint8_t p[WL134_LEN];
+  buildWl134(982, 123456789ULL, true, p);
+  p[29] = ETX_ALT;
+  char out[32];
+  CHECK(parse(MODE_AUTO, p, sizeof p, out, sizeof out) == OK);
+  CHECK(strcmp(out, "982000123456789") == 0);
+  CHECK(endsWithWl134(p, sizeof p));
+}
+
 static void testWl134Range() {
   printf("WL134: fora da faixa ISO\n");
   uint8_t p[WL134_LEN];
@@ -172,6 +183,7 @@ int main() {
   testWl134KnownBytes();
   testWl134Checksum();
   testWl134WithNoise();
+  testWl134AltEnd();
   testWl134Range();
   testAscii15();
   testRawHex();

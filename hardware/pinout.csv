@@ -6,3 +6,5 @@ Buzzer,GPIO25,saida,via transistor NPN
 Vibracao,GPIO26,saida,via transistor NPN + diodo
 LED,GPIO2,saida,LED da placa (e opcional externo)
 Leitura da bateria,GPIO34,entrada analogica,divisor 100k/100k (fator 2)
+Display SDA (opcional),GPIO21,I2C,display em 3V3
+Display SCL (opcional),GPIO22,I2C,display em 3V3

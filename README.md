@@ -33,7 +33,8 @@ conexão com o sistema. O hardware próprio faz apenas a leitura da tag e a comu
 
 ## Por onde começar
 
-1. Leia `docs/01-arquitetura.md` e `docs/02-lista-de-materiais.md`.
+1. Leia `docs/01-arquitetura.md`, `docs/02-lista-de-materiais.md` e `docs/03-ligacoes-eletricas.md`
+   (atenção: o leitor WL-134 costuma pedir 9 V; são dois conversores).
 2. **Etapa de bancada (obrigatória):** confirme a frequência/padrão dos brincos do rebanho e valide o
    formato de saída do módulo leitor com `tools/serial_hexdump.py` (veja `docs/06-plano-de-testes.md`).
 3. Ajuste `firmware/include/config.h` (pinos, baud rate, parser) e grave o ESP32 (`firmware/README.md`).

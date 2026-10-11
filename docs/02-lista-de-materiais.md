@@ -12,7 +12,7 @@ para preenchimento pela equipe.
 | 3 | Antena/bobina LF 134,2 kHz | 1 | Se não vier com o módulo; tamanho da bobina define o alcance |
 | 4 | Bateria Li-ion 18650 protegida, 3,7 V, 2500 mAh ou mais | 1 | Mais suporte/holder |
 | 5 | Módulo carregador TP4056 com proteção (USB-C) | 1 | Com DW01 + 8205A para proteção da bateria |
-| 6 | Conversor step-up para 5 V (MT3608 ou equivalente) | 1 | Ajustar a saída para 5,0 V antes de ligar |
+| 6 | Conversor step-up MT3608 | 2 | A: tensão do leitor (9 V ou 5 V); B: 5,0 V para o ESP32. Ajustar antes de ligar |
 | 7 | Capacitor eletrolítico 470 µF / 10 V | 2 | Filtro da alimentação do módulo leitor |
 | 8 | Capacitor cerâmico 100 nF | 4 | Desacoplamento |
 | 9 | Resistores 100 kΩ | 2 | Divisor de tensão para medir a bateria |

@@ -3,6 +3,7 @@ import json
 import os
 import sqlite3
 import sys
+import tempfile
 import threading
 import unittest
 import urllib.error
@@ -86,7 +87,7 @@ class TestServidorHttp(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.db = os.path.join(os.environ.get("TMPDIR", "/tmp"), f"bastao_{uuid.uuid4().hex}.db")
+        cls.db = os.path.join(tempfile.gettempdir(),f"bastao_{uuid.uuid4().hex}.db")
         cls.srv = api.servidor_teste(0, cls.db, TOKENS)
         cls.url = f"http://127.0.0.1:{cls.srv.server_address[1]}/api/v1/bastao/leituras"
         threading.Thread(target=cls.srv.serve_forever, daemon=True).start()
@@ -94,6 +95,8 @@ class TestServidorHttp(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.srv.shutdown()
+        cls.srv.server_close()
+        cls.srv.conn.close()
         os.remove(cls.db)
 
     def post(self, corpo, token="tok-fazenda-a"):

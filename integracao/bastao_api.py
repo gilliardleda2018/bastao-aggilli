@@ -212,7 +212,9 @@ def servidor_teste(porta: int, banco: str, tokens: Dict[str, str]):
         def log_message(self, fmt, *args):
             pass
 
-    return ThreadingHTTPServer(("0.0.0.0", porta), Handler)
+    srv = ThreadingHTTPServer(("0.0.0.0", porta), Handler)
+    srv.conn = conn  # para quem encerra o servidor fechar o banco (no Windows o arquivo fica travado)
+    return srv
 
 
 if __name__ == "__main__":

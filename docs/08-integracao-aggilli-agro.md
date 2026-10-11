@@ -6,13 +6,14 @@ sem exportar CSV nem copiar nada.
 ```
 Brinco -> Bastão (ESP32) --BLE--> App Android --HTTPS--> Aggilli Agro (API) -> banco -> módulo web
                 │                     │
-         fila em RAM até o      SQLite: guarda tudo offline e envia
+         fila em flash até o    SQLite: guarda tudo offline e envia
          app confirmar (ACK)    quando houver internet (WorkManager)
 ```
 
 ## Como o app sincroniza
 
-- Cada leitura recebe um **UUID** no celular e fica marcada como pendente no SQLite.
+- Cada leitura recebe um **UUID** no celular e fica marcada como pendente no SQLite. O horário é o da
+  leitura no curral (o bastão data as leituras com a hora enviada pelo celular), não o do envio.
 - Após cada leitura nova, o app agenda um envio em ~10 s (agrupa as leituras em sequência).
 - Sem internet (comum no curral), o envio espera e o Android repete sozinho quando a rede voltar,
   **mesmo com o app fechado** (WorkManager, com backoff exponencial).
@@ -37,7 +38,7 @@ Content-Type: application/json
 {
   "fazenda_id": "fazenda-sao-joao",
   "dispositivo": "Bastao 01",
-  "app_versao": "0.2.0",
+  "app_versao": "0.3.0",
   "leituras": [
     {
       "uuid": "6b0d6a8e-2f7c-4d36-9c1e-0f4a8d2e7b51",

@@ -1,50 +1,51 @@
 # 02 — Lista de materiais (BOM)
 
-A mesma lista, em CSV para planilha, está em `hardware/bom.csv`. Preços e fornecedores ficam em branco
-para preenchimento pela equipe.
+A mesma lista, em CSV para planilha, está em `hardware/bom.csv`. Preços de referência (outubro de
+2026) e lojas estão na página ilustrada do projeto; os preços mudam, cote antes de comprar.
+
+Custo estimado de **um bastão: cerca de R$ 700 em peças** (lista completa com reservas: cerca de
+R$ 1.050). Para começar na bancada: leitores, ESP32 e adaptador USB-TTL, cerca de R$ 490.
 
 ## Eletrônica
 
 | # | Item | Qtd | Especificação / observação |
 |---|---|---|---|
-| 1 | Placa ESP32 DevKit (ESP32-WROOM-32) | 1 | Com USB para gravação |
-| 2 | Módulo leitor RFID FDX-B 134,2 kHz com saída UART | 1 | Confirmar no datasheet do fornecedor: tensão de alimentação, nível lógico (3,3 V ou 5 V), baud rate e formato do frame |
-| 3 | Antena/bobina LF 134,2 kHz | 1 | Se não vier com o módulo; tamanho da bobina define o alcance |
-| 4 | Bateria Li-ion 18650 protegida, 3,7 V, 2500 mAh ou mais | 1 | Mais suporte/holder |
-| 5 | Módulo carregador TP4056 com proteção (USB-C) | 1 | Com DW01 + 8205A para proteção da bateria |
-| 6 | Conversor step-up MT3608 | 2 | A: tensão do leitor (9 V ou 5 V); B: 5,0 V para o ESP32. Ajustar antes de ligar |
-| 7 | Capacitor eletrolítico 470 µF / 10 V | 2 | Filtro da alimentação do módulo leitor |
-| 8 | Capacitor cerâmico 100 nF | 4 | Desacoplamento |
-| 9 | Resistores 100 kΩ | 2 | Divisor de tensão para medir a bateria |
-| 10 | Resistores 10 kΩ e 20 kΩ | 1 cada | Divisor 5 V -> 3,3 V, só se o TX do módulo for 5 V |
-| 11 | Resistores 1 kΩ | 2 | Base dos transistores |
-| 12 | Resistor 330 Ω | 1 | LED externo |
-| 13 | Transistor NPN BC547 ou 2N2222 | 2 | Aciona buzzer e motor de vibração |
-| 14 | Diodo 1N4148 ou 1N4007 | 1 | Diodo de roda livre no motor de vibração |
-| 15 | Buzzer ativo 5 V | 1 | |
-| 16 | Motor de vibração 3 V (opcional) | 1 | |
-| 17 | LED 5 mm | 1 | |
-| 18 | Microchave com alavanca (gatilho) | 1 | |
-| 19 | Chave liga/desliga | 1 | |
-| 20 | Placa perfurada ou PCB, conectores e fios | 1 | |
-| 21 | Adaptador USB-UART 3,3 V (CP2102 ou CH340) | 1 | Para a etapa de bancada |
+| 1 | Módulo leitor RFID FDX-B 134,2 kHz, saída TTL | 1 (+1 reserva) | WL-134/WL134A, 5 a 9 V, 9600 baud, pacote de 30 bytes; vem com antenas de 65 e 130 mm |
+| 2 | ESP32 DevKit 38 pinos (ESP32-WROOM-32) | 1 (+1) | Não usar ESP32-C3/S2: o firmware é para o ESP32 clássico |
+| 3 | Display OLED 1,3" SH1106 128×64 I2C | 1 | 4 pinos (VCC, GND, SCL, SDA) |
+| 4 | Módulo leitor de cartão microSD, SPI, 3,3 V | 1 | Se for módulo de 5 V com regulador, alimentar em 5 V |
+| 5 | Cartão microSD 8 a 32 GB, FAT32, classe 10 | 1 | Formatar em FAT32 antes de usar |
+| 6 | Bateria Li-ion 18650 com proteção (Samsung 25R ou similar) | 2 | Em paralelo; mesma tensão antes de unir |
+| 7 | Suporte 2× 18650 em paralelo | 1 | |
+| 8 | Carregador TP4056 USB-C com proteção (DW01 + 8205A) | 1 | |
+| 9 | Conversor step-up MT3608 | 2 | A: tensão do leitor (9,0 V ou 5,0 V). B: 5,0 V para o ESP32 |
+| 10 | Chave liga/desliga mini 2 A | 1 | |
+| 11 | Micro switch com alavanca (gatilho) | 1 | |
+| 12 | Buzzer ativo 5 V | 1 | |
+| 13 | Motor de vibração moeda 3 V | 1 | |
+| 14 | LED 5 mm | 1 | Opcional (há LED na placa) |
+| 15 | Transistor NPN BC547 | 2 | Buzzer e vibração |
+| 16 | Diodo 1N4148 | 1 | Roda livre do motor |
+| 17 | Resistores | 1 kit | 2× 100 kΩ, 10 kΩ, 20 kΩ (ou 22 k + 12 k), 2× 1 kΩ, 330 Ω |
+| 18 | Capacitores | 1 kit | 2× 470 µF/16 V, 4× 100 nF |
+| 19 | Placa perfurada, barra de pinos fêmea, fio 22 AWG, JST, termorretrátil | 1 kit | |
 
 ## Mecânica
 
 | # | Item | Qtd | Observação |
 |---|---|---|---|
-| 22 | Tubo de PVC ou fibra para a haste | 1 | Não usar metal perto da antena |
-| 23 | Carcaça da empunhadura (impressa em 3D, PETG ou ASA) | 1 | ASA ou PETG resistem melhor a sol e umidade |
-| 24 | Alojamento da antena na ponta (não metálico) | 1 | Resina epóxi ou carcaça impressa vedada |
-| 25 | Suporte articulado para celular, com garra ajustável | 1 | Ângulo regulável para leitura sob sol |
-| 26 | Cordão de segurança para o celular | 1 | |
-| 27 | Parafusos de nylon ou inox (afastados da antena) | 1 kit | Metal próximo à bobina reduz o alcance |
-| 28 | Termorretrátil, abraçadeiras, vedação (anéis o-ring, silicone) | 1 kit | |
+| 20 | Caixa Patola PBL-150 IP65 (150 × 100 × 60 mm) | 1 | Empunhadura do protótipo |
+| 21 | Tubo de fibra de vidro 20 a 25 mm, 1 m | 1 | PVC serve no protótipo. Nada de metal ou fibra de carbono |
+| 22 | Ponteira não metálica selada (impressa em ASA ou tampa de PVC + epóxi) | 1 | Leitor + bobina |
+| 23 | Prensa-cabo PG7, parafusos inox M3, silicone neutro, janela de policarbonato | 1 kit | |
 
-## Para testes
+## Bancada
 
 | # | Item | Qtd | Observação |
 |---|---|---|---|
-| 29 | Brincos eletrônicos do rebanho (amostra) | 10 ou mais | Fundamental para validar o alcance |
-| 30 | Celular Android (Android 8.0 ou superior, BLE) | 1 | |
-| 31 | Multímetro e fonte de bancada | 1 | |
+| 24 | Adaptador USB-TTL CP2102 3,3 V | 1 | Simulador de brinco e captura do leitor |
+| 25 | Brincos FDX-B do rebanho | 10 | Pedir à fazenda |
+| 26 | Celular Android 8.0+ com BLE | 1 | |
+| 27 | Multímetro, ferro de solda, fonte de bancada | 1 | |
+
+O suporte de celular na haste saiu do projeto na v0.3: o celular fica no bolso.

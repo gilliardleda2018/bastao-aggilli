@@ -1,53 +1,46 @@
 # 03 — Ligações elétricas
 
-Atenção: os pinos abaixo são os padrões de `firmware/include/config.h` e `hardware/pinout.csv`.
-Se mudar um pino, mude nos dois lugares.
+Os pinos abaixo são os de `firmware/include/config.h` e `hardware/pinout.csv`. Mudou um pino, mude
+nos dois lugares.
 
 ## Alimentação
 
 ```
-2x 18650 em paralelo -> TP4056 (carga + proteção) -> Chave liga/desliga -+-> Step-up A (9,0 V ou 5,0 V) -> Módulo leitor (VCC)
-                                                                         |                              filtro 470 µF + 100 nF
-                                                                         +-> Step-up B (5,0 V) ---------> ESP32 (pino VIN)
+2x 18650 em paralelo -> TP4056 (carga + proteção) -> Chave -+-> MT3608 A (9,0 V ou 5,0 V) -> Leitor (VCC), com 470 µF + 100 nF
+                                                            |
+                                                            +-> MT3608 B (5,0 V) ---------> ESP32 (VIN)
+                                                            |
+                                                            +-> divisor 100k/100k -------> GPIO34 (medição)
+ESP32 3V3 -> display OLED (VCC) e módulo microSD (VCC, se for de 3,3 V)
 ```
 
-- **Confirme a tensão do módulo leitor antes de tudo.** Os módulos da família WL-134 costumam pedir
-  **9 V** (há versões de 5 V). Por isso são dois conversores: A na tensão do leitor e B a 5 V para o ESP32.
-  Alimentar o ESP32 com 9 V no VIN aquece demais o regulador da placa.
-- O GND de tudo é comum.
-- Ruído do conversor step-up reduz o alcance de leitores LF. Mantenha o step-up **longe da antena**,
-  use os capacitores de filtro e fios curtos.
-- Confirme no datasheet do módulo leitor a corrente consumida (inclusive picos).
+- **Confirme a tensão do leitor antes de tudo.** WL-134 costuma pedir 9 V; há versões de 5 V.
+- Ajuste os dois MT3608 **sem carga** e só depois ligue leitor e ESP32.
+- GND de tudo comum.
+- Mantenha conversores e baterias longe da bobina: ruído e metal reduzem o alcance.
 
-## Módulo leitor -> ESP32
+## Pinagem
 
-| Módulo leitor | ESP32 | Observação |
+| Função | Pino ESP32 | Ligação |
 |---|---|---|
-| VCC | +5 V (ou 3,3 V, conforme datasheet) | Com filtro 470 µF + 100 nF perto do módulo |
-| GND | GND | |
-| TX | GPIO16 (RX2) | **Meça o TX antes de ligar.** Até 3,6 V: direto. ~5 V: divisor 10 kΩ (série) / 20 kΩ (GND). ~9 V: 22 kΩ / 12 kΩ |
-| RX | GPIO17 (TX2) | Opcional, para configurar o módulo |
-| Antena | Terminais da antena do módulo | Cabo curto e afastado de metal |
+| Leitor TX | GPIO16 (RX2) | Meça o TX antes. Até 3,6 V: direto. ~5 V: 10 kΩ série + 20 kΩ ao GND. ~9 V: 22 kΩ + 12 kΩ |
+| Leitor RX (opcional) | GPIO17 | Normalmente sem ligação |
+| Gatilho | GPIO4 | Micro switch entre GPIO4 e GND (pull-up interno) |
+| Buzzer | GPIO25 | 1 kΩ → base do BC547; buzzer entre +5 V e coletor; emissor no GND |
+| Vibração | GPIO26 | Igual ao buzzer; motor entre 3,3 V e coletor, 1N4148 em paralelo (catodo no +) |
+| LED | GPIO2 | LED da placa; externo: 330 Ω → LED → GND |
+| Bateria (ADC) | GPIO34 | Bateria+ (após a chave) → 100 kΩ → GPIO34 → 100 kΩ → GND, 100 nF ao GND |
+| Display SDA | GPIO21 | I2C |
+| Display SCL | GPIO22 | I2C |
+| microSD CS | GPIO5 | SPI (VSPI) |
+| microSD SCK | GPIO18 | SPI |
+| microSD MISO | GPIO19 | SPI |
+| microSD MOSI | GPIO23 | SPI |
 
-Divisor para TX de 5 V: TX do módulo -> 10 kΩ -> GPIO16, e GPIO16 -> 20 kΩ -> GND.
+## Cuidados
 
-## Entradas e saídas
-
-| Função | ESP32 | Circuito |
-|---|---|---|
-| Gatilho | GPIO4 | Microchave entre GPIO4 e GND (usa `INPUT_PULLUP`, ativo em nível baixo) |
-| Buzzer ativo | GPIO25 | GPIO25 -> 1 kΩ -> base NPN; emissor no GND; buzzer entre +5 V e coletor |
-| Motor de vibração | GPIO26 | Igual ao buzzer, com diodo 1N4148/1N4007 em paralelo ao motor (catodo no +) |
-| LED | GPIO2 (LED da placa) | LED externo opcional em GPIO2 -> 330 Ω -> LED -> GND |
-| Display (opcional) | GPIO21 SDA / GPIO22 SCL | OLED SH1106 ou LCD de memória em 3V3 (firmware ainda sem suporte) |
-| Leitura da bateria | GPIO34 (ADC1) | Bateria + -> 100 kΩ -> GPIO34 -> 100 kΩ -> GND, com 100 nF em GPIO34/GND |
-
-A leitura da bateria usa fator 2 (divisor 1:1) e dá apenas uma **estimativa** (o ADC do ESP32 não é linear).
-
-## Segurança
-
-- Use sempre bateria com proteção e carregue pelo TP4056 com proteção.
-- Não deixe a bateria exposta a calor excessivo (sol dentro de carcaça fechada).
-- Ajuste as saídas dos dois step-up (leitor e 5,0 V) **antes** de ligar o ESP32 e o módulo.
-- Recomendado: módulo leitor dentro da ponteira, junto da bobina; pela haste descem só VCC, GND e TX
-  (ver `docs/05-mecanica.md`).
+- Bateria sempre com proteção e carga pelo TP4056.
+- Sem os 470 µF junto ao leitor, o pico de corrente da bobina pode reiniciar o ESP32.
+- O GPIO5 é um pino de inicialização do ESP32; com o módulo SD ligado ele funciona normalmente,
+  mas se o ESP32 não gravar pelo USB, desconecte o SD durante a gravação.
+- Cartão microSD em FAT32. Para tirar o cartão, desligue o bastão antes.

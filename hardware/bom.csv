@@ -1,33 +1,27 @@
-item,descricao,qtd,observacao,preco_unit_brl,fornecedor
-1,Placa ESP32 DevKit (ESP32-WROOM-32),1,Com USB para gravacao,,
-2,Modulo leitor RFID FDX-B 134.2 kHz saida UART,1,Confirmar tensao / nivel logico / baud / formato do frame,,
-3,Antena/bobina LF 134.2 kHz,1,Se nao acompanhar o modulo,,
-4,Bateria Li-ion 18650 protegida 3.7V >=2500mAh + suporte 2x paralelo,2,Mesma tensao antes de unir,,
-5,Modulo carregador TP4056 com protecao (USB-C),1,DW01 + 8205A,,
-6,Conversor step-up MT3608,2,A: tensao do leitor (9V ou 5V); B: 5.0V para o ESP32,,
-7,Capacitor eletrolitico 470uF/16V,2,Filtro de alimentacao,,
-8,Capacitor ceramico 100nF,4,Desacoplamento,,
-9,Resistor 100k,2,Divisor da bateria,,
-10,Resistor 10k + 20k (ou 22k + 12k),1,Divisor do TX do leitor: 5V ou 9V -> 3.3V,,
-11,Resistor 1k,2,Base dos transistores,,
-12,Resistor 330 ohm,1,LED externo,,
-13,Transistor NPN BC547 ou 2N2222,2,Buzzer e vibracao,,
-14,Diodo 1N4148 ou 1N4007,1,Roda livre do motor de vibracao,,
-15,Buzzer ativo 5V,1,,,
-16,Motor de vibracao 3V (opcional),1,,,
-17,LED 5mm,1,,,
-18,Microchave com alavanca (gatilho),1,,,
-19,Chave liga/desliga,1,,,
-20,Placa perfurada ou PCB + conectores + fios,1,,,
-21,Adaptador USB-UART 3.3V (CP2102/CH340),1,Bancada,,
-22,Tubo de PVC ou fibra (haste),1,Sem metal perto da antena,,
-23,Carcaca da empunhadura (impressao 3D PETG/ASA),1,,,
-24,Alojamento da antena (nao metalico),1,Vedado,,
-25,Suporte articulado para celular com garra,1,,,
-26,Cordao de seguranca do celular,1,,,
-27,Parafusos de nylon/inox,1,Afastados da antena,,
-28,Termorretratil / abracadeiras / vedacao,1,,,
-29,Brincos eletronicos do rebanho (amostra),10,Validacao de alcance,,
-30,Celular Android (8.0+ com BLE),1,,,
-31,Multimetro e fonte de bancada,1,,,
-32,Display OLED 1.3in SH1106 I2C (opcional),1,Prototipo; LCD de memoria no produto,,
+item,descricao,qtd,observacao,preco_ref_brl,fonte_preco
+1,Modulo leitor RFID FDX-B 134.2kHz TTL (WL-134/WL134A 5-9V) com antenas,1,+1 reserva; 9600 baud; pacote 30 bytes,173.61,Eletronica da China (verificado)
+2,ESP32 DevKit 38 pinos (ESP32-WROOM-32),1,+1 reserva; nao usar C3/S2,55.00,mediana WJ/Vamuino/Tarzan (verificado)
+3,Display OLED 1.3in SH1106 128x64 I2C,1,4 pinos,39.99,Testando Tecnologias (verificado)
+4,Modulo leitor de cartao microSD SPI 3.3V,1,,10.00,estimativa
+5,Cartao microSD 8-32GB classe 10 (FAT32),1,,30.00,estimativa
+6,Bateria 18650 com protecao (Samsung 25R 2500mAh),2,mesma tensao antes de unir,89.64,Distribuidora de CFTV (verificado)
+7,Suporte 2x18650 em paralelo,1,,10.00,estimativa
+8,Carregador TP4056 USB-C com protecao,1,DW01 + 8205A,4.90,Eletrogate (verificado)
+9,Conversor step-up MT3608,2,A: 9.0V (ou 5.0V) leitor; B: 5.0V ESP32,6.00,estimativa
+10,Chave liga/desliga mini 2A,1,,4.00,estimativa
+11,Micro switch com alavanca (gatilho),1,,3.00,estimativa
+12,Buzzer ativo 5V,1,,4.00,estimativa
+13,Motor de vibracao moeda 3V,1,,6.00,estimativa
+14,LED 5mm,1,opcional,0.50,estimativa
+15,Transistor NPN BC547,2,buzzer e vibracao,0.50,estimativa
+16,Diodo 1N4148,1,roda livre do motor,0.30,estimativa
+17,Kit resistores (100k x2; 10k; 20k ou 22k+12k; 1k x2; 330R),1,,10.00,estimativa
+18,Capacitores 470uF/16V x2 e 100nF x4,1,,5.00,estimativa
+19,Placa perfurada + barra de pinos femea + fio 22AWG + JST + termorretratil,1,,40.00,estimativa
+20,Caixa Patola PBL-150 IP65 (150x100x60mm),1,empunhadura do prototipo,75.23,Eletrodex (verificado)
+21,Tubo de fibra de vidro 20-25mm 1m,1,PVC serve no prototipo,45.00,estimativa
+22,Ponteira nao metalica selada (ASA ou PVC + epoxi),1,,20.00,estimativa
+23,Prensa-cabo PG7 + parafusos inox M3 + silicone + janela policarbonato,1,,25.00,estimativa
+24,Adaptador USB-TTL CP2102 3.3V,1,bancada,32.90,Mercado Livre (verificado)
+25,Brincos FDX-B do rebanho (amostra),10,pedir a fazenda,0,
+26,Celular Android 8.0+ com BLE,1,do operador,0,

@@ -1,58 +1,65 @@
 # 06 — Plano de testes
 
-## Etapa 1 — Bancada (obrigatória antes de qualquer outra)
+## Etapa 0 — No computador (sem hardware)
 
-Objetivo: confirmar que o módulo lê os brincos do rebanho e descobrir o formato exato do frame.
+- [ ] `cd firmware/test_host && make`: deve terminar com 0 falhas (parser, fila, diário em flash,
+      gatilho, bateria, datas, CSV do cartão, display).
+- [ ] `python -m unittest integracao/test_bastao_api.py`: receptor da API.
+- [ ] `python tools/simulate_tag.py --stdout --ids 076000000001234`: gera o pacote WL-134.
 
-1. Confirme com o fornecedor dos brincos: frequência (134,2 kHz), tipo (FDX-B ou HDX) e norma (ISO 11784/11785).
-2. Ligue o módulo leitor a um adaptador USB-UART 3,3 V (TX do módulo -> RX do adaptador; GND comum).
-   Atenção ao nível lógico (ver `docs/03-ligacoes-eletricas.md`).
-3. Rode `python tools/serial_hexdump.py <porta> <baud>` e aproxime um brinco.
-4. Registre o frame recebido (bytes em hexadecimal e ASCII) e compare com o datasheet do módulo.
-5. Ajuste o parser em `firmware/src/main.cpp` (`parseFrame`) ou use `PARSER_MODE 1` (hex bruto) até o formato estar claro.
-6. Meça o alcance com a antena escolhida, em várias orientações do brinco.
+## Etapa 1 — Bancada sem leitor
 
-Registre os resultados:
+- [ ] Gravar o firmware; o monitor serial mostra `Bastao Aggilli fw 0.3.0 | ligacao N`.
+- [ ] Display acende e mostra `-- CONT` e "aguardando".
+- [ ] Com cartão no SD: aparece `[SD] cartao montado` e "SD" no display.
+- [ ] Simulador (TX do CP2102 no GPIO16): `--count 20` gera 20 leituras; `--repeat 20` gera uma;
+      `--corrupt` gera `frame descartado: CHECKSUM_INVALIDO`.
 
-| Brinco | Orientação | Distância máx. de leitura (cm) | Observações |
-|---|---|---|---|
-| | | | |
+## Etapa 2 — Leitor real
 
-### Sem módulo e sem brinco (antes da compra)
+1. Confirmar com o fornecedor dos brincos: 134,2 kHz, FDX-B, ISO 11784/11785.
+2. Medir a tensão do TX do leitor antes de ligar no ESP32.
+3. Aproximar um brinco: frame de 30 bytes (02 ... 03) e o ID igual ao impresso no brinco.
+4. Medir o alcance nas duas antenas e várias orientações.
 
-- Testes do parser e da fila no PC: `cd firmware/test_host && make`.
-- ESP32 + simulador: TX de um adaptador USB-UART no GPIO16 e
-  `python tools/simulate_tag.py <porta> --count 20`. Teste também `--repeat 20` (anti-duplicata)
-  e `--corrupt` (deve aparecer `CHECKSUM_INVALIDO` na serial e nada no app).
+| Brinco | Antena | Orientação | Distância máx. (cm) | Observações |
+|---|---|---|---|---|
+| | | | | |
 
-## Etapa 2 — Firmware + BLE
+## Etapa 3 — Bastão + app
 
-- [ ] O ESP32 recebe o frame e imprime o ID na serial USB.
-- [ ] Anti-duplicata: manter o brinco no campo gera uma única notificação em `DEDUP_MS`.
-- [ ] Gatilho: no modo 1, só lê com o gatilho apertado.
-- [ ] Reconexão BLE: desligar/ligar o bastão e o Bluetooth do celular.
-- [ ] Distância BLE entre bastão e celular (alcance real no suporte).
-- [ ] Fila offline: desligar o Bluetooth do celular, ler 20 brincos (bip longo), religar: as 20 chegam com o horário certo.
-- [ ] Fila cheia: mais de `QUEUE_CAPACITY` leituras offline gera o aviso de descartadas no app.
+- [ ] "Escolher bastão" lista o bastão pelo nome (`Bastao-Aggilli-XXXX`) e conecta.
+- [ ] Notificação fixa "Bastão conectado"; com a tela apagada e o app em segundo plano, 20 leituras
+      chegam normalmente.
+- [ ] "Bip" faz o bastão apitar; modo contínuo/gatilho troca pelo app e pelo toque longo de 1,5 s.
+- [ ] Brinco repetido na sessão: dois bipes no bastão, "REPETIDO" no display e aviso no app.
+- [ ] Voz ligada: o celular fala os 4 últimos dígitos; "repetido" quando for o caso.
+- [ ] Display mostra a contagem da sessão enviada pelo app.
 
-## Etapa 3 — App
+## Etapa 4 — Nada se perde
 
-- [ ] Permissões Bluetooth em Android 8, 11 e 12 ou superior.
-- [ ] Gravação no SQLite e persistência após fechar o app.
-- [ ] Leituras repetidas na mesma sessão marcadas como duplicadas.
-- [ ] Exportação CSV abre corretamente na planilha.
-- [ ] Nova sessão zera a lista sem apagar os dados anteriores.
-- [ ] Atualização da v0.1 para a v0.2 mantém as leituras antigas (migração do SQLite).
-- [ ] Sincronização: modo avião, ler, fechar o app, voltar a rede: as leituras chegam ao servidor sozinhas.
-- [ ] Token errado mostra erro na tela e não fica tentando para sempre.
+- [ ] Bluetooth do celular desligado: 20 leituras (bip longo, "GUARDADO" no display); religar:
+      as 20 chegam com o horário certo e o app avisa "20 leituras recuperadas".
+- [ ] Bluetooth desligado, 10 leituras, **desligar e religar o bastão**, reconectar: as 10 chegam.
+- [ ] Tirar a energia no meio de uma leitura (desligar a chave enquanto lê): ao religar, nada além da
+      leitura em curso se perde.
+- [ ] Mais de 500 leituras offline: o app avisa quantas foram descartadas da fila (o SD guarda todas).
+- [ ] Cartão SD: arquivo `/leituras/AAAA-MM-DD.csv` com uma linha por leitura e a data/hora local.
+      Leituras feitas antes de o celular informar a hora vão para `sem-data-ligacao-NNNN.csv`.
+- [ ] Remover o cartão com o bastão ligado: display mostra "SD!" e o bastão continua lendo; ao
+      recolocar, volta a gravar em até 10 s.
 
-## Etapa 4 — Campo
+## Etapa 5 — App e sincronização
 
-- [ ] Leitura no tronco/brete (metal por perto): alcance e taxa de falha.
-- [ ] Taxa de leitura: animais lidos / animais presentes, em um lote de contagem conhecida.
-- [ ] Autonomia da bateria em um turno completo (horas por carga).
-- [ ] Sol forte: legibilidade da tela.
-- [ ] Poeira, chuva e queda de cerca de 1 m (proteção da carcaça e do celular).
-- [ ] Sem sinal de celular: modo offline e exportação.
+- [ ] Atualização do app 0.2 para 0.3 mantém as leituras e a configuração.
+- [ ] Modo avião, leituras, app fechado, rede de volta: as leituras chegam ao Aggilli Agro.
+- [ ] Token errado mostra erro e não fica tentando para sempre.
+- [ ] CSV exportado abre certo na planilha.
 
-Anote a meta de taxa de leitura aceitável com a Aggilli antes da etapa 4.
+## Etapa 6 — Campo
+
+- [ ] Lote de contagem conhecida: taxa de leitura (lidos / presentes) dentro da meta.
+- [ ] Tronco de metal: alcance e falhas anotados.
+- [ ] Turno inteiro com uma carga.
+- [ ] Display legível ao sol.
+- [ ] Chuva, poeira e queda de 1 m.

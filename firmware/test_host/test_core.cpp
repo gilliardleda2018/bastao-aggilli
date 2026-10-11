@@ -128,9 +128,9 @@ static void testRawHex() {
 static void testQueue() {
   printf("Fila: push, envio, ACK, reconexao e estouro\n");
   ReadingQueue<4> q;
-  CHECK(q.push(1, 100, "A"));
-  CHECK(q.push(2, 200, "B"));
-  CHECK(q.push(3, 300, "C"));
+  CHECK(q.push(1, 1, 100, 0, "A"));
+  CHECK(q.push(2, 1, 200, 0, "B"));
+  CHECK(q.push(3, 1, 300, 0, "C"));
   CHECK(q.size() == 3);
 
   // Envia duas, cai a conexao
@@ -156,10 +156,10 @@ static void testQueue() {
   CHECK(q.ack(1) == 0);
 
   // Estouro: capacidade 4, a mais antiga sai
-  CHECK(q.push(4, 400, "D"));
-  CHECK(q.push(5, 500, "E"));
-  CHECK(q.push(6, 600, "F"));
-  CHECK(!q.push(7, 700, "G"));  // descartou a 3
+  CHECK(q.push(4, 1, 400, 0, "D"));
+  CHECK(q.push(5, 1, 500, 0, "E"));
+  CHECK(q.push(6, 1, 600, 0, "F"));
+  CHECK(!q.push(7, 1, 700, 0, "G"));  // descartou a 3
   CHECK(q.size() == 4);
   CHECK(q.dropped() == 1);
   q.rewind();
@@ -171,12 +171,14 @@ static void testQueue() {
 
   // Volta do contador de 32 bits
   ReadingQueue<4> w;
-  w.push(0xFFFFFFFEu, 0, "X");
-  w.push(0xFFFFFFFFu, 0, "Y");
-  w.push(0u, 0, "Z");
+  w.push(0xFFFFFFFEu, 1, 0, 0, "X");
+  w.push(0xFFFFFFFFu, 1, 0, 0, "Y");
+  w.push(0u, 1, 0, 0, "Z");
   CHECK(w.ack(0xFFFFFFFFu) == 2);
   CHECK(w.nextToSend()->seq == 0u);
 }
+
+int runLogicTests();  // test_logic.cpp
 
 int main() {
   testWl134Valid();
@@ -188,6 +190,7 @@ int main() {
   testAscii15();
   testRawHex();
   testQueue();
-  printf("\n%d verificacoes, %d falhas\n", checks, failures);
-  return failures ? 1 : 0;
+  int f2 = runLogicTests();
+  printf("\nparser e fila: %d verificacoes, %d falhas\n", checks, failures);
+  return (failures || f2) ? 1 : 0;
 }

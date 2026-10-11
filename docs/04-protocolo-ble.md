@@ -1,6 +1,7 @@
-# 04 — Protocolo BLE (bastão <-> app)
+# 04 — Protocolo BLE (bastão <-> app), versão 3
 
-O bastão anuncia o nome `Bastao-Aggilli` e o serviço abaixo. O app procura pelo UUID do serviço.
+O bastão anuncia o serviço abaixo. O nome vem na resposta ao scan, com os 4 últimos dígitos do MAC
+(`Bastao-Aggilli-A1B2`), para distinguir vários bastões na mesma fazenda.
 
 ## UUIDs
 
@@ -12,68 +13,84 @@ O bastão anuncia o nome `Bastao-Aggilli` e o serviço abaixo. O app procura pel
 | `CONTROL` (write) | `a91c0004-5f3e-4b8a-9d27-3c6e1b7f0a10` |
 
 Os mesmos valores estão em `firmware/include/config.h` e `android/.../ble/BleUuids.kt`.
-Para trocar, gere novos UUIDs e atualize os dois lados.
 
-## Mensagens (texto ASCII, campos separados por `;`)
+Todas as mensagens são texto ASCII com campos separados por `;`. Campos novos sempre entram no fim,
+e os dois lados aceitam mensagens com campos a menos (compatibilidade entre versões).
 
-### `READING` (bastão -> app)
-
-```
-R;<seq>;<uptime_ms>;<id>;<idade_ms>
-```
-
-- `seq`: contador crescente desde o boot do bastão.
-- `uptime_ms`: milissegundos desde o boot, no momento da leitura.
-- `id`: 15 dígitos (padrão ISO 11784: 3 dígitos de país + 12 do animal), ou o frame bruto em
-  hexadecimal com `PARSER_MODE 1`.
-- `idade_ms` (fw 0.2.0+): há quanto tempo a leitura foi feita. O app grava
-  `horário do celular - idade_ms`, então leituras feitas offline ficam com o horário certo.
-  Acima de 3 s o app trata como **recuperada** da fila (sem bip por leitura).
-
-Exemplo: `R;12;348120;982000123456789;35`
-
-### `STATUS` (bastão -> app, a cada 5 s)
+## `READING` (bastão -> app)
 
 ```
-S;<bateria_mV>;<modo_gatilho>;<versao_fw>;<pendentes>;<descartadas>
+R;<seq>;<uptime_ms>;<id>;<idade_ms>;<epoch>
 ```
 
-- `pendentes`: leituras na fila do bastão ainda não confirmadas pelo app.
-- `descartadas`: leituras perdidas porque a fila encheu (`QUEUE_CAPACITY`) desde o boot.
+| Campo | Desde | Significado |
+|---|---|---|
+| `seq` | 0.1 | Número da leitura. Continua depois de desligar e religar (fica no diário da flash). |
+| `uptime_ms` | 0.1 | `millis()` do bastão no momento da leitura. |
+| `id` | 0.1 | 15 dígitos ISO 11784 (3 de país + 12 do animal), ou hex bruto com `PARSER_MODE 1`. |
+| `idade_ms` | 0.2 | Há quanto tempo a leitura foi feita. `-1` se ela é de uma ligação anterior do bastão. |
+| `epoch` | 0.3 | Data/hora UNIX (s) da leitura. `0` se o celular ainda não tinha informado a hora. |
 
-Exemplo: `S;3987;0;0.2.0;0;0`
+O app calcula o horário assim: `epoch` se for maior que 0; senão `agora - idade_ms`; senão a hora de
+chegada (leitura antiga, sem hora: marcada como recuperada).
 
-## Fila offline e confirmação (fw 0.2.0+)
+Exemplo: `R;212;348120;076000000001234;35;1791740600`
 
-Toda leitura entra numa fila em RAM no bastão e só sai quando o app confirma:
+## `STATUS` (bastão -> app, a cada 5 s e ao conectar)
 
-1. O app conecta, ativa as notificações e escreve `H` no `CONTROL`.
-2. O bastão (re)envia, em ordem, tudo o que está na fila, uma notificação a cada `NOTIFY_GAP_MS`.
-3. Depois de gravar no SQLite, o app escreve `A;<seq>`: o bastão remove as leituras até `seq`.
-4. Se a conexão cair, o que não foi confirmado é reenviado na próxima conexão. O app ignora
-   duplicatas (mesma tag na sessão), então o reenvio não gera registros repetidos.
+```
+S;<bateria_mV>;<modo>;<versao_fw>;<pendentes>;<descartadas>;<bateria_%>;<sd>;<ligacao>
+```
 
-Com o celular desconectado, o bastão continua lendo e dá um **bip longo** (leitura guardada).
-Com o celular conectado, o bip é curto.
-
-A fila fica em RAM: se o bastão for **desligado** antes de reconectar, as pendentes se perdem
-(gravação em flash está no roadmap).
-
-### `CONTROL` (app -> bastão)
-
-| Comando | Efeito |
+| Campo | Significado |
 |---|---|
-| `B` | Bip, LED e vibração do bastão |
-| `M0` | Modo contínuo (lê sempre) |
-| `M1` | Modo gatilho (lê só com o gatilho apertado) |
-| `H` | App pronto: (re)enviar a fila (fw 0.2.0+) |
-| `A;<seq>` | Confirma as leituras até `seq` (fw 0.2.0+) |
+| `bateria_mV` | Tensão estimada da bateria (ADC do ESP32 × divisor) |
+| `modo` | `0` contínuo, `1` gatilho |
+| `versao_fw` | Ex.: `0.3.0` |
+| `pendentes` | Leituras na fila do bastão esperando confirmação |
+| `descartadas` | Leituras perdidas porque a fila encheu (desde que ligou) |
+| `bateria_%` | Carga estimada pela curva Li-ion (desde 0.3) |
+| `sd` | `0` sem cartão, `1` ok, `2` erro (desde 0.3) |
+| `ligacao` | Quantas vezes o bastão foi ligado (desde 0.3) |
 
-Compatibilidade: um app antigo não manda `H`; o firmware começa a enviar mesmo assim após
-`HELLO_TIMEOUT_MS` (2 s). Sem `A`, as leituras ficam na fila e são reenviadas a cada conexão.
+Exemplo: `S;3987;0;0.3.0;0;0;73;1;42`
+
+## `CONTROL` (app -> bastão)
+
+| Comando | Desde | Efeito |
+|---|---|---|
+| `H` | 0.2 | App pronto: o bastão (re)envia a fila, da mais antiga para a mais nova |
+| `A;<seq>` | 0.2 | Confirma as leituras até `seq`; o bastão tira da fila e registra no diário |
+| `B` | 0.1 | Bip de teste no bastão |
+| `M0` / `M1` | 0.1 | Modo contínuo / gatilho (fica salvo na memória do bastão) |
+| `T;<epoch>;<fuso_min>` | 0.3 | Data/hora UNIX (s) e fuso do celular em minutos (ex.: `-180`). O bastão data as leituras e os arquivos do cartão SD |
+| `C;<n>` | 0.3 | Contagem da sessão no app, mostrada no display do bastão |
+| `D` | 0.3 | A última leitura já estava na sessão: bip duplo e "REPETIDO" no display |
+
+Sequência ao conectar (app 0.3):
+
+1. App ativa as notificações e escreve `H`.
+2. App escreve `T;<epoch>;<fuso>` e `C;<contagem>`.
+3. Bastão manda `STATUS` e começa a reenviar a fila (uma notificação a cada `NOTIFY_GAP_MS`).
+4. Para cada `READING`, o app grava no SQLite, responde `A;<seq>`, e `D` se for repetido, mais `C;<n>`.
+
+## Fila offline e diário em flash
+
+Toda leitura entra numa fila em RAM e num diário em flash (`/fila.log` no LittleFS). Ela só sai quando
+o app confirma (`A`). Se o celular estiver longe, o bastão continua lendo e dá um **bip longo**.
+Se o bastão for **desligado**, ao religar ele refaz a fila a partir do diário e reenvia tudo.
+
+Um registro cortado por falta de energia é descartado sem perder os anteriores. O diário é
+compactado quando a fila esvazia ou quando passa de `LOG_COMPACT_BYTES`.
+
+## Compatibilidade
+
+| App \ Firmware | 0.1 | 0.2 | 0.3 |
+|---|---|---|---|
+| 0.1 | ok | ok (sem fila confirmada) | ok (sem fila confirmada) |
+| 0.2 | ok | ok | ok (sem hora, display sem contagem) |
+| 0.3 | ok | ok (comandos T, C, D ignorados) | completo |
 
 ## MTU
 
-O app solicita MTU 185 e o firmware também configura 185, para caber mensagens maiores que 20 bytes.
-Se a negociação falhar, as mensagens de 15 dígitos (cerca de 30 bytes) ainda podem ser truncadas:
-nesse caso, reduza o formato ou use `PARSER_MODE 0` com o MTU negociado.
+App e firmware pedem MTU 185. Uma `READING` típica tem cerca de 50 bytes.

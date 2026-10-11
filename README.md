@@ -1,58 +1,70 @@
 # Bastão de Coleta RFID — Aggilli
 
-Bastão portátil para leitura de brincos eletrônicos (RFID) de rebanhos.
-Um **celular Android é acoplado ao bastão** e funciona como display, processador, armazenamento e
-conexão com o sistema. O hardware próprio faz apenas a leitura da tag e a comunicação com o celular.
+Bastão próprio para leitura de brincos eletrônicos FDX-B (134,2 kHz) de bovinos. O bastão lê o
+brinco e transmite por Bluetooth para o celular do operador, que fica no bolso. O celular grava as
+leituras por sessão e as envia sozinho ao **Aggilli Agro**. O bastão tem display, cartão de memória
+e memória interna próprios: nada se perde com o celular longe, sem sinal ou com o bastão desligado.
 
-**Proprietário do projeto:** Aggilli
+**Proprietário do projeto:** Aggilli Intelligence · **Versão:** 0.3.0
 
 ## Como funciona
 
 ```
-[Antena LF 134,2 kHz] -> [Módulo leitor FDX-B] -> [ESP32] --BLE--> [Celular Android] -> [Sistema Aggilli]
-                                                    ^
-                                      [Gatilho] [Bateria] [Buzzer/LED/Vibra]
+Brinco -> [Ponteira: antena + leitor FDX-B] -UART-> [Empunhadura: ESP32] -BLE-> [Celular no bolso] -HTTPS-> [Aggilli Agro]
+                                                       display · gatilho · bip/vibração
+                                                       fila em flash · histórico no microSD
 ```
 
-1. O operador aproxima o bastão do brinco (e aperta o gatilho, se o modo gatilho estiver ativo).
-2. O módulo leitor entrega o ID por UART; o ESP32 remove repetições e envia por BLE.
-3. O app grava a leitura (SQLite local), confirma ao bastão, mostra na tela e dá retorno sonoro/vibratório.
-4. Com internet, o app envia as leituras sozinho ao **Aggilli Agro** web (também exporta CSV).
-   Sem internet ou com o celular longe, nada se perde: o bastão e o app guardam e enviam depois.
+1. O operador aproxima o bastão do brinco (no modo gatilho, aperta o gatilho).
+2. O ESP32 confere o pacote (checksum), remove repetições, bipa, mostra no display, guarda na fila
+   em flash e no cartão SD, e envia ao celular.
+3. O app grava, confirma ao bastão, avisa repetidos (no bastão e por voz) e mostra a contagem.
+4. Com internet, o app envia as leituras ao Aggilli Agro, mesmo com a tela apagada ou o app fechado.
 
 ## Estrutura do repositório
 
 | Pasta | Conteúdo |
 |---|---|
-| `docs/` | Arquitetura, lista de materiais, ligações elétricas, protocolo BLE, mecânica, plano de testes, roadmap |
-| `hardware/` | Lista de materiais em CSV (`bom.csv`) e tabela de pinos (`pinout.csv`) |
-| `firmware/` | Firmware do ESP32 (PlatformIO, framework Arduino) |
+| `docs/` | Arquitetura, materiais, ligações, protocolo BLE, mecânica, testes, roadmap, integração, manual do operador, produção e preço |
+| `hardware/` | Lista de materiais (`bom.csv`) e pinagem (`pinout.csv`) |
+| `firmware/` | Firmware do ESP32 (PlatformIO, Arduino); lógica testável em `lib/bastao_core`, testes em `test_host` |
 | `android/` | App Android (Kotlin + Jetpack Compose) |
-| `integracao/` | Receptor de referência da API no Aggilli Agro (FastAPI ou biblioteca padrão) + testes |
-| `tools/` | Bancada: captura da serial do módulo e simulador de brinco |
+| `integracao/` | Receptor de referência da API no Aggilli Agro + testes |
+| `tools/` | Bancada: captura da serial do leitor e simulador de brinco |
+
+## Documentação
+
+| Documento | Para quem |
+|---|---|
+| [01 Arquitetura](docs/01-arquitetura.md) | Todos |
+| [02 Lista de materiais](docs/02-lista-de-materiais.md) | Compras |
+| [03 Ligações elétricas](docs/03-ligacoes-eletricas.md) | Montagem |
+| [04 Protocolo BLE v3](docs/04-protocolo-ble.md) | Firmware e app |
+| [05 Mecânica](docs/05-mecanica.md) | Carcaça |
+| [06 Plano de testes](docs/06-plano-de-testes.md) | Bancada e campo |
+| [07 Roadmap](docs/07-roadmap.md) | Gestão |
+| [08 Integração com o Aggilli Agro](docs/08-integracao-aggilli-agro.md) | Backend |
+| [09 Manual do operador](docs/09-manual-do-operador.md) | Quem usa no curral |
+| [10 Produção, custo e preço](docs/10-producao-e-preco.md) | Comercial |
+| [Firmware](firmware/README.md) · [App](android/README.md) · [Histórico de versões](CHANGELOG.md) | Desenvolvimento |
 
 ## Por onde começar
 
-1. Leia `docs/01-arquitetura.md`, `docs/02-lista-de-materiais.md` e `docs/03-ligacoes-eletricas.md`
-   (atenção: o leitor WL-134 costuma pedir 9 V; são dois conversores).
-2. **Etapa de bancada (obrigatória):** confirme a frequência/padrão dos brincos do rebanho e valide o
-   formato de saída do módulo leitor com `tools/serial_hexdump.py` (veja `docs/06-plano-de-testes.md`).
-3. Ajuste `firmware/include/config.h` (pinos, baud rate, parser) e grave o ESP32 (`firmware/README.md`).
-4. Abra a pasta `android/` no Android Studio e rode o app (`android/README.md`).
+1. Compre primeiro os leitores, os ESP32 e o adaptador USB-TTL (`docs/02`).
+2. Rode os testes no computador: `cd firmware/test_host && make`.
+3. Grave o firmware (`firmware/README.md`) e teste com o simulador de brinco (`docs/06`, etapa 1).
+4. Com o leitor em mãos, confirme tensão, nível do TX e formato do frame (`docs/03` e `docs/06`).
+5. Abra `android/` no Android Studio e rode o app (`android/README.md`).
 
-## Status (v0.2.0)
+## Status (v0.3.0)
 
-- Parser e fila offline do firmware **testados no PC** (`firmware/test_host`); simulador validado contra o parser.
-- Receptor da API **testado** (`integracao/`).
-- Firmware e app **ainda não compilados nos toolchains reais** (PlatformIO/Android Studio) nem testados em hardware.
-
-Pontos que dependem da bancada:
-
-- Formato do frame UART do módulo comprado (modo AUTO cobre WL-134 e ASCII decimal).
-- Alcance real da antena com os brincos do rebanho.
-- Versões de dependências (Gradle/AGP/Compose) podem precisar de ajuste conforme o Android Studio instalado.
-- Publicar a rota da API no Aggilli Agro (`docs/08-integracao-aggilli-agro.md`).
+- Lógica do firmware testada no computador: **125 verificações, 0 falhas** (parser, fila, diário em
+  flash com queda de energia simulada, gatilho, bateria, datas, CSV do cartão, display).
+- Receptor da API testado (`integracao/`).
+- Firmware verificado em sintaxe contra as APIs do ESP32; app verificado em sintaxe com o kotlinc.
+- **Ainda não compilados nos toolchains reais** (PlatformIO e Android Studio) nem testados em hardware:
+  espere pequenos ajustes no primeiro build.
 
 ## Licença
 
-Copyright (c) 2026 Aggilli. Todos os direitos reservados. (Texto provisório: revisar com o jurídico da Aggilli.)
+Copyright (c) 2026 Aggilli Intelligence. Todos os direitos reservados. (Texto provisório: revisar com o jurídico.)

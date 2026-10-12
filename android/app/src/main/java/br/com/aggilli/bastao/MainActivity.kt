@@ -17,8 +17,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
@@ -258,7 +259,7 @@ fun Screen(vm: MainViewModel, onConnect: () -> Unit, onPick: () -> Unit, onExpor
     }
 }
 
-/** Faixa azul do topo: a marca Aggilli, o bastão escolhido e o estado da conexão. */
+/** Topo: a logomarca Aggilli Agro original, sobre branco, e a faixa azul com o bastão e a conexão. */
 @Composable
 private fun Cabecalho(s: UiState) {
     val estado = when (s.conn) {
@@ -266,49 +267,53 @@ private fun Cabecalho(s: UiState) {
         BleClient.ConnState.DISCONNECTED -> Aggilli.Parado
         else -> Aggilli.Andamento
     }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Brush.horizontalGradient(listOf(Aggilli.AzulEscuro, Aggilli.Azul)))
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier.size(46.dp).clip(CircleShape).background(Color.White),
-                contentAlignment = Alignment.Center,
-            ) {
-                Image(painterResource(R.drawable.ic_aggilli_mark), contentDescription = "Aggilli", modifier = Modifier.size(34.dp))
-            }
-            Column(modifier = Modifier.padding(start = 12.dp).weight(1f)) {
-                Text("AGGILLI", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, letterSpacing = 1.5.sp)
-                Text(
-                    "AGRO · coleta de brincos", color = Color(0xFFB8E89C), fontWeight = FontWeight.SemiBold,
-                    fontSize = 12.sp, letterSpacing = 1.sp,
-                )
-            }
-            Surface(shape = RoundedCornerShape(50), color = estado) {
-                Text(
-                    connLabel(s), color = Color.White, style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                )
-            }
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 20.dp, vertical = 12.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Image(
+                painter = painterResource(R.drawable.logo_aggilli_agro),
+                contentDescription = "Aggilli Agro: tecnologia que cultiva um amanhã melhor",
+                modifier = Modifier.fillMaxWidth().heightIn(max = 112.dp),
+                contentScale = ContentScale.Fit,
+            )
         }
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color.White.copy(alpha = 0.12f))
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                .background(Brush.horizontalGradient(listOf(Aggilli.AzulEscuro, Aggilli.Azul)))
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text(
-                s.wandName ?: "Nenhum bastão escolhido", color = Color.White, fontWeight = FontWeight.Medium,
-                modifier = Modifier.weight(1f),
-            )
-            Text(s.batteryPercent?.let { "Bateria $it%" } ?: "Bateria --", color = Color.White, style = MaterialTheme.typography.bodySmall)
-            sdLabel(s.sdState)?.let {
-                Text("  ·  $it", color = Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.bodySmall)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "Coleta de brincos", color = Color.White, fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp, modifier = Modifier.weight(1f),
+                )
+                Surface(shape = RoundedCornerShape(50), color = estado) {
+                    Text(
+                        connLabel(s), color = Color.White, style = MaterialTheme.typography.labelMedium,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                    )
+                }
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.White.copy(alpha = 0.12f))
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    s.wandName ?: "Nenhum bastão escolhido", color = Color.White, fontWeight = FontWeight.Medium,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(s.batteryPercent?.let { "Bateria $it%" } ?: "Bateria --", color = Color.White, style = MaterialTheme.typography.bodySmall)
+                sdLabel(s.sdState)?.let {
+                    Text("  ·  $it", color = Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.bodySmall)
+                }
             }
         }
     }

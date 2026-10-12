@@ -19,9 +19,9 @@ item,descricao,qtd,observacao,preco_ref_brl,fonte_preco,link_compra
 18,Capacitores 470uF/16V x2 e 100nF x4,1,,5.00,estimativa,https://www.usinainfo.com.br/capacitor-eletrolitico/capacitor-eletrolitico-470uf-16v-kit-com-10-unidades-3054.html
 19,Placa perfurada + barra de pinos femea + fio 22AWG + JST + termorretratil,1,,40.00,estimativa,https://www.eletrogate.com/placa-fenolite-perfurada-10x10cm
 20,Caixa Patola PBL-150 IP65 (150x100x60mm),1,empunhadura do prototipo,75.23,Eletrodex (verificado),https://www.mercadolivre.com.br/kit-com-10-caixas-ip65-branca-140x100x60mm-proteco-externa/p/MLB42124685
-21,Tubo de fibra de vidro 20-25mm 1m,1,PVC serve no prototipo,45.00,estimativa,
-22,Ponteira nao metalica selada (ASA ou PVC + epoxi),1,,20.00,estimativa,
-23,Prensa-cabo PG7 + parafusos inox M3 + silicone + janela policarbonato,1,,25.00,estimativa,https://www.eletrogate.com/prensa-cabo-pg7-branco
+21,"Haste: cano PVC soldavel marrom 25mm (parede ~1,7mm; ~21,6mm interno)",1,"1,5 m ou barra; cortar 60-80 cm apos teste com o operador",15.00,estimativa,
+22,Ponteira: cano PVC esgoto 75mm (pedaco 8-10cm) + 2 tampoes 75mm + adesivo PVC + Durepoxi,1,bobina de 65mm cabe dentro (~72mm interno); um tampao furado em 25mm,35.00,estimativa,
+23,Adaptador soldavel curto 25mm x 3/4 + bucha e arruela 3/4 + silicone neutro + parafusos inox M3 + janela policarbonato (PG7 opcional),1,,25.00,estimativa,https://www.eletrogate.com/prensa-cabo-pg7-branco
 24,Adaptador USB-TTL CP2102 3.3V,1,bancada,32.90,Mercado Livre (verificado),https://www.usinainfo.com.br/conversores-de-sinal/modulo-conversor-usb-para-ttl-cp2102--4470.html
 25,Brincos FDX-B do rebanho (amostra),10,pedir a fazenda,0,,
 26,Celular Android 8.0+ com BLE,1,do operador,0,,

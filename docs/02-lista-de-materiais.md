@@ -35,9 +35,9 @@ R$ 1.050). Para começar na bancada: leitores, ESP32 e adaptador USB-TTL, cerca 
 | # | Item | Qtd | Observação |
 |---|---|---|---|
 | 20 | Caixa Patola PBL-150 IP65 (150 × 100 × 60 mm) | 1 | Empunhadura do protótipo |
-| 21 | Tubo de fibra de vidro 20 a 25 mm, 1 m | 1 | PVC serve no protótipo. Nada de metal ou fibra de carbono |
-| 22 | Ponteira não metálica selada (impressa em ASA ou tampa de PVC + epóxi) | 1 | Leitor + bobina |
-| 23 | Prensa-cabo PG7, parafusos inox M3, silicone neutro, janela de policarbonato | 1 kit | |
+| 21 | Haste: cano de PVC soldável marrom 25 mm (parede ~1,7 mm, ~21,6 mm por dentro) | 1,5 m | Protótipo; corte de 60 a 80 cm depois de testar com o operador. Produto: fibra de vidro. Nada de metal ou fibra de carbono |
+| 22 | Ponteira: cano de esgoto 75 mm (pedaço de 8 a 10 cm) + 2 tampões 75 mm + adesivo de PVC + Durepoxi | 1 | A bobina de 65 mm cabe dentro; um tampão furado em 25 mm recebe a haste |
+| 23 | Adaptador soldável curto 25 mm × ¾" + bucha e arruela ¾", silicone neutro, parafusos inox M3, janela de policarbonato | 1 kit | O adaptador prende a haste na caixa; prensa-cabo PG7 opcional |
 
 ## Bancada
 
@@ -95,6 +95,8 @@ Eletrogate e na Usinainfo economiza frete.
 | Item | Onde | Atenção |
 |---|---|---|
 | Caixa da empunhadura | [Mercado Livre: caixa IP65 140×100×60 mm](https://www.mercadolivre.com.br/kit-com-10-caixas-ip65-branca-140x100x60mm-proteco-externa/p/MLB42124685) | Patola PBL-150 não encontrada à venda; esta tem medida próxima e borracha na tampa (kit de 10) |
-| Haste | Cano de PVC 25 mm, loja de material de construção | Protótipo. Sem alumínio na ponteira e nos 15 cm finais (ver `docs/11-guia-de-montagem.pdf`) |
-| Prensa-cabo PG7 | [Eletrogate: PG7](https://www.eletrogate.com/prensa-cabo-pg7-branco) | |
-| Ponteira, silicone, M3 inox, policarbonato | Ferragem / material de construção | Tampa de PVC 25 mm + epóxi |
+| Haste | Cano de PVC soldável marrom 25 mm (1,5 m), loja de material de construção | Sem alumínio na ponteira e nos 15 cm finais (ver `docs/11-guia-de-montagem.pdf`) |
+| Ponteira | Cano de esgoto 75 mm (pedaço de 10 cm), 2 tampões 75 mm, adesivo de PVC, Durepoxi | Furar um tampão com serra-copo de 25 mm |
+| Fixação na caixa | Adaptador soldável curto 25 mm × ¾", bucha e arruela de eletroduto ¾", silicone neutro | Furo de 27 mm na parede da caixa |
+| Prensa-cabo PG7 (opcional) | [Eletrogate: PG7](https://www.eletrogate.com/prensa-cabo-pg7-branco) | Só se os fios vierem por cabo separado |
+| Parafusos M3 inox, policarbonato | Ferragem | |

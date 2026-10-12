@@ -13,7 +13,10 @@
 
 1. **Ponteira:** bobina + módulo leitor juntos, selados com epóxi ou silicone. Pela haste descem
    4 fios: VCC do leitor, GND, TX e um reserva.
-2. **Haste:** tubo de fibra de vidro de 20 a 25 mm. Comprimento a definir com o operador (alcançar a
+   No protótipo: cano de esgoto de 75 mm (8 a 10 cm) fechado por dois tampões, porque a bobina de
+   65 mm e o módulo (~47 × 22 mm) não cabem no cano da haste; um tampão é furado em 25 mm para a haste.
+2. **Haste:** tubo de fibra de vidro de 20 a 25 mm (protótipo: cano de PVC soldável marrom de 25 mm,
+   parede ~1,7 mm, preso à caixa por adaptador soldável 25 mm × ¾" com bucha e arruela). Comprimento a definir com o operador (alcançar a
    orelha no tronco sem entrar nele). Nada de metal nos 15 cm finais.
 3. **Empunhadura:** ESP32, baterias, TP4056, conversores, placa auxiliar (buzzer, transistores,
    divisores), módulo microSD, motor de vibração, gatilho sob capa de silicone, chave, USB-C com

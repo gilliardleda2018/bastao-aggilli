@@ -49,4 +49,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.2")
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
+
+    testImplementation("junit:junit:4.13.2")
 }

@@ -33,7 +33,7 @@ services:
     command: >
       sh -c "cp -r /src/android /work && cd /work && rm -rf app/build .gradle
       && echo sdk.dir=$$ANDROID_HOME > local.properties
-      && gradle assembleDebug --no-daemon && cp app/build/outputs/apk/debug/*.apk /saida/"
+      && gradle testDebugUnitTest assembleDebug --no-daemon && cp app/build/outputs/apk/debug/*.apk /saida/"
 
   # Receptor de teste, para o app no celular sincronizar de verdade (mesma rede Wi-Fi do PC).
   api:

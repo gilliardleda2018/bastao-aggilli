@@ -23,6 +23,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun startDiscovery() = c.startDiscovery()
     fun stopDiscovery() = c.stopDiscovery()
     fun selectWand(w: FoundWand) = c.selectWand(w)
+    fun selectPaired(w: FoundWand) = c.selectPaired(w)
+    fun manualEntry(text: String): Boolean = c.manualEntry(text)
     fun forgetWand() = c.forgetWand()
     fun startNewSession() = c.startNewSession()
     fun beepWand() = c.beepWand()

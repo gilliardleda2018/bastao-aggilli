@@ -4,6 +4,17 @@ import android.Manifest
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.ImeAction
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -163,8 +174,14 @@ fun Screen(vm: MainViewModel, onConnect: () -> Unit, onPick: () -> Unit, onExpor
 
     if (showSyncConfig) SyncConfigDialog(vm = vm, onDismiss = { showSyncConfig = false })
     if (showPicker) {
-        WandPickerDialog(s = s, onPick = { vm.selectWand(it); showPicker = false }, onForget = { vm.forgetWand() },
-            onRescan = onPick, onDismiss = { vm.stopDiscovery(); showPicker = false })
+        WandPickerDialog(
+            s = s,
+            onPick = { vm.selectWand(it); showPicker = false },
+            onPickPaired = { vm.selectPaired(it); showPicker = false },
+            onForget = { vm.forgetWand() },
+            onRescan = onPick,
+            onDismiss = { vm.stopDiscovery(); showPicker = false },
+        )
     }
 
     LazyColumn(
@@ -182,6 +199,7 @@ fun Screen(vm: MainViewModel, onConnect: () -> Unit, onPick: () -> Unit, onExpor
                     Text("Recebendo ${s.wandPending} leitura(s) guardada(s) no bastão…", color = MaterialTheme.colorScheme.primary)
                 }
                 UltimoBrinco(s)
+                EntradaManual(onEnviar = vm::manualEntry)
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Numero("Animais na sessão", s.total.toString(), Modifier.weight(1f), destaque = true)
                     Numero("Sessão", s.session, Modifier.weight(1f))
@@ -201,10 +219,16 @@ fun Screen(vm: MainViewModel, onConnect: () -> Unit, onPick: () -> Unit, onExpor
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    val connected = s.conn == BleClient.ConnState.CONNECTED
-                    OutlinedButton(onClick = { vm.beepWand() }, enabled = connected) { Text("Bip") }
-                    OutlinedButton(onClick = { vm.setTriggerMode(s.triggerMode != 1) }, enabled = connected) {
-                        Text(if (s.triggerMode == 1) "Modo: gatilho" else "Modo: contínuo")
+                    // Bip e modo só existem no bastão Aggilli; os comerciais se configuram no próprio aparelho
+                    if (s.wandType == WAND_AGGILLI) {
+                        val connected = s.conn == BleClient.ConnState.CONNECTED
+                        OutlinedButton(onClick = { vm.beepWand() }, enabled = connected) { Text("Bip") }
+                        OutlinedButton(onClick = { vm.setTriggerMode(s.triggerMode != 1) }, enabled = connected) {
+                            Text(if (s.triggerMode == 1) "Modo: gatilho" else "Modo: contínuo")
+                        }
+                    } else {
+                        Text("Bastão de outra marca (Bluetooth serial)", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Spacer(Modifier.weight(1f))
                     Text("Voz")
@@ -310,7 +334,9 @@ private fun Cabecalho(s: UiState) {
                     s.wandName ?: "Nenhum bastão escolhido", color = Color.White, fontWeight = FontWeight.Medium,
                     modifier = Modifier.weight(1f),
                 )
-                Text(s.batteryPercent?.let { "Bateria $it%" } ?: "Bateria --", color = Color.White, style = MaterialTheme.typography.bodySmall)
+                if (s.wandType == WAND_AGGILLI) {
+                    Text(s.batteryPercent?.let { "Bateria $it%" } ?: "Bateria --", color = Color.White, style = MaterialTheme.typography.bodySmall)
+                }
                 sdLabel(s.sdState)?.let {
                     Text("  ·  $it", color = Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.bodySmall)
                 }
@@ -370,19 +396,65 @@ private fun Numero(rotulo: String, valor: String, modifier: Modifier = Modifier,
 private fun formatarBrinco(tag: String): String =
     if (tag.length == 15 && tag.all { it.isDigit() }) tag.substring(0, 3) + " " + tag.substring(3) else tag
 
+/**
+ * Campo para digitar ou colar o número, e para bastões no modo teclado (HID), que "digitam"
+ * o número e apertam Enter sozinhos: toque no campo antes de ler para o número cair nele.
+ */
+@Composable
+private fun EntradaManual(onEnviar: (String) -> Boolean) {
+    var texto by remember { mutableStateOf("") }
+    fun enviar() {
+        if (texto.isNotBlank() && onEnviar(texto)) texto = ""
+    }
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedTextField(
+            value = texto,
+            onValueChange = { novo ->
+                // Enter de teclado físico/HID pode chegar como quebra de linha
+                if (novo.contains('\n') || novo.contains('\r')) {
+                    texto = novo.replace("\r", "").replace("\n", "")
+                    enviar()
+                } else {
+                    texto = novo
+                }
+            },
+            label = { Text("Digitar brinco ou modo teclado (HID)") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { enviar() }),
+            modifier = Modifier
+                .weight(1f)
+                .onPreviewKeyEvent { ev ->
+                    if (ev.type == KeyEventType.KeyUp && (ev.key == Key.Enter || ev.key == Key.NumPadEnter)) {
+                        enviar(); true
+                    } else {
+                        false
+                    }
+                },
+        )
+        FilledTonalButton(onClick = { enviar() }, enabled = texto.isNotBlank()) { Text("Registrar") }
+    }
+}
+
 @Composable
 fun WandPickerDialog(
     s: UiState,
     onPick: (br.com.aggilli.bastao.ble.FoundWand) -> Unit,
+    onPickPaired: (br.com.aggilli.bastao.ble.FoundWand) -> Unit,
     onForget: () -> Unit,
     onRescan: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val context = LocalContext.current
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Escolher bastão") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text("BASTÃO AGGILLI", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                 Text(
                     if (s.discovering) "Procurando bastões ligados por perto…" else "Ligue o bastão e toque em Procurar.",
                     style = MaterialTheme.typography.bodySmall,
@@ -397,6 +469,29 @@ fun WandPickerDialog(
                         Text(signal(w.rssi), style = MaterialTheme.typography.bodySmall)
                     }
                     HorizontalDivider()
+                }
+
+                Text(
+                    "OUTRAS MARCAS (ALLFLEX, DATAMARS, GALLAGHER…)",
+                    style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(top = 10.dp),
+                )
+                Text(
+                    "Pareie o bastão antes nas configurações de Bluetooth do celular (PIN costuma ser 0000 ou 1234) " +
+                        "e deixe-o no modo Bluetooth padrão (serial/SPP). Depois escolha-o aqui.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                s.paired.forEach { w ->
+                    val current = w.address == s.wandAddress
+                    Text(
+                        w.name + if (current) "  (atual)" else "",
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.fillMaxWidth().clickable { onPickPaired(w) }.padding(vertical = 8.dp),
+                    )
+                    HorizontalDivider()
+                }
+                TextButton(onClick = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) }) {
+                    Text("Abrir configurações de Bluetooth")
                 }
                 if (s.wandAddress != null) {
                     TextButton(onClick = onForget) { Text("Esquecer ${s.wandName ?: "bastão atual"}") }

@@ -1,5 +1,8 @@
 package br.com.aggilli.bastao
 
+import android.annotation.SuppressLint
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
 import android.os.Handler
@@ -10,6 +13,8 @@ import br.com.aggilli.bastao.ble.FoundWand
 import br.com.aggilli.bastao.ble.WandStatus
 import br.com.aggilli.bastao.data.Reading
 import br.com.aggilli.bastao.data.ReadingDb
+import br.com.aggilli.bastao.leitor.EidParser
+import br.com.aggilli.bastao.leitor.SppClient
 import br.com.aggilli.bastao.sync.SyncConfig
 import br.com.aggilli.bastao.sync.SyncWorker
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +33,9 @@ data class UiState(
     val total: Int = 0,
     val lastTag: String? = null,
     val lastWasDuplicate: Boolean = false,
-    // bastão
+    // bastão: [WAND_AGGILLI] (BLE, com fila, bateria e bip) ou [WAND_SPP] (comercial, só o número)
+    val wandType: String = WAND_AGGILLI,
+    val paired: List<FoundWand> = emptyList(),
     val wandName: String? = null,
     val wandAddress: String? = null,
     val batteryPercent: Int? = null,
@@ -48,17 +55,27 @@ data class UiState(
     val syncError: String? = null,
 )
 
+/** Bastão Aggilli: BLE com o protocolo próprio (docs/04). */
+const val WAND_AGGILLI = "aggilli"
+
+/** Bastão comercial (Allflex, Datamars, Gallagher…): Bluetooth clássico, perfil serial. */
+const val WAND_SPP = "spp"
+
 /**
  * Coração do app: conexão com o bastão, sessão de leituras, avisos e sincronização.
  * É um objeto único do processo (não da tela): continua coletando com a tela apagada,
  * mantido vivo pelo [BleForegroundService] enquanto a conexão estiver ativa.
  * Todos os métodos rodam na thread principal.
  */
-class BastaoController private constructor(private val app: Context) : BleClient.Listener {
+@SuppressLint("MissingPermission")  // a tela pede as permissões de Bluetooth antes de conectar ou listar
+class BastaoController private constructor(private val app: Context) : BleClient.Listener, SppClient.Listener {
 
     private val db = ReadingDb.get(app)
     private val prefs = app.getSharedPreferences("bastao", Context.MODE_PRIVATE)
     private val ble = BleClient(app, this)
+    private val spp = SppClient(this)
+    private val adapter: BluetoothAdapter? =
+        (app.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter
     private val feedback = Feedback(app)
     private val speaker = Speaker(app)
     private val main = Handler(Looper.getMainLooper())
@@ -73,7 +90,12 @@ class BastaoController private constructor(private val app: Context) : BleClient
     private var wandDropped = 0L
     private var discovered: List<FoundWand> = emptyList()
     private var discovering = false
+    private var paired: List<FoundWand> = emptyList()
     private var message: String? = null
+
+    /** Bastão comercial com o brinco parado perto da antena repete o número: ignora por 3 s. */
+    private var ultimoExterno: String? = null
+    private var ultimoExternoEm = 0L
 
     private var recoveredBatch = 0
     private val flushRecovered = Runnable {
@@ -107,10 +129,24 @@ class BastaoController private constructor(private val app: Context) : BleClient
     // ------------------------------------------------------------ ações
 
     fun connect() {
-        active = true
-        message = null
-        stopDiscovery()
-        ble.start(prefs.getString("wand_address", null))
+        val address = prefs.getString("wand_address", null)
+        if (wandType() == WAND_SPP) {
+            val bt = adapter
+            if (address == null || bt == null || !bt.isEnabled) {
+                message = if (bt?.isEnabled == true) "Escolha o bastão na lista de pareados." else "Ligue o Bluetooth do celular."
+                publish()
+                return
+            }
+            active = true
+            message = null
+            stopDiscovery()
+            spp.start(bt, address)
+        } else {
+            active = true
+            message = null
+            stopDiscovery()
+            ble.start(address)
+        }
         ContextCompat.startForegroundService(app, Intent(app, BleForegroundService::class.java))
         publish()
     }
@@ -118,6 +154,7 @@ class BastaoController private constructor(private val app: Context) : BleClient
     fun disconnect() {
         active = false
         ble.stop()
+        spp.stop()
         app.stopService(Intent(app, BleForegroundService::class.java))
         publish()
     }
@@ -126,9 +163,41 @@ class BastaoController private constructor(private val app: Context) : BleClient
 
     fun startDiscovery() {
         discovering = true
+        paired = pairedDevices()
         ble.startDiscovery()
         main.postDelayed({ discovering = false; publish() }, 8_000)
         publish()
+    }
+
+    /** Aparelhos já pareados no Android: é assim que os bastões comerciais aparecem. */
+    private fun pairedDevices(): List<FoundWand> = try {
+        adapter?.bondedDevices.orEmpty()
+            .map { FoundWand(it.name ?: it.address, it.address, 0) }
+            .sortedBy { it.name.lowercase() }
+    } catch (e: SecurityException) {
+        emptyList()
+    }
+
+    private fun wandType(): String = prefs.getString("wand_type", WAND_AGGILLI) ?: WAND_AGGILLI
+
+    /** O usuário escolheu um bastão comercial já pareado: lembra dele e conecta pelo SPP. */
+    fun selectPaired(w: FoundWand) {
+        prefs.edit().putString("wand_address", w.address).putString("wand_name", w.name)
+            .putString("wand_type", WAND_SPP).apply()
+        if (active) disconnect()
+        connect()
+    }
+
+    /** Número digitado, colado ou "digitado" por um bastão no modo teclado (HID). */
+    fun manualEntry(text: String): Boolean {
+        val tag = EidParser.extrair(text)
+        if (tag == null) {
+            message = "Não achei um número de brinco de 15 dígitos em \"${text.trim().take(30)}\"."
+            publish()
+            return false
+        }
+        registrarAoVivo(tag)
+        return true
     }
 
     fun stopDiscovery() {
@@ -139,13 +208,15 @@ class BastaoController private constructor(private val app: Context) : BleClient
 
     /** O usuário escolheu um bastão na lista: lembra dele e conecta. */
     fun selectWand(w: FoundWand) {
-        prefs.edit().putString("wand_address", w.address).putString("wand_name", w.name).apply()
-        if (active) ble.stop()
+        prefs.edit().putString("wand_address", w.address).putString("wand_name", w.name)
+            .putString("wand_type", WAND_AGGILLI).apply()
+        if (active) disconnect()
         connect()
     }
 
     fun forgetWand() {
-        prefs.edit().remove("wand_address").remove("wand_name").apply()
+        if (active) disconnect()
+        prefs.edit().remove("wand_address").remove("wand_name").remove("wand_type").apply()
         publish()
     }
 
@@ -243,6 +314,29 @@ class BastaoController private constructor(private val app: Context) : BleClient
         publish()
     }
 
+    // -------------------------------------------------------- SppClient.Listener
+
+    override fun onSppState(state: BleClient.ConnState, detail: String?) = onState(state, detail)
+
+    override fun onSppTag(tag: String) = registrarAoVivo(tag)
+
+    /** Leitura que chega na hora (bastão comercial ou digitada): grava, avisa e sincroniza. */
+    private fun registrarAoVivo(tag: String) {
+        val now = System.currentTimeMillis()
+        if (tag == ultimoExterno && now - ultimoExternoEm < REPETICAO_MS) return
+        ultimoExterno = tag
+        ultimoExternoEm = now
+
+        val isNew = db.insert(session, tag, now, false)
+        lastTag = tag
+        lastWasDuplicate = !isNew
+        message = null
+        if (isNew) feedback.ok() else feedback.duplicate()
+        speaker.announce(tag, !isNew)
+        if (isNew && syncConfig.autoSync && syncConfig.isConfigured) SyncWorker.requestSoon(app)
+        publish()
+    }
+
     override fun onStatus(status: WandStatus) {
         if (status.dropped > wandDropped) {
             message = "Atenção: a fila do bastão encheu e ${status.dropped - wandDropped} leitura(s) foram perdidas."
@@ -281,6 +375,8 @@ class BastaoController private constructor(private val app: Context) : BleClient
             total = db.count(session),
             lastTag = lastTag,
             lastWasDuplicate = lastWasDuplicate,
+            wandType = wandType(),
+            paired = paired,
             wandName = prefs.getString("wand_name", null),
             wandAddress = prefs.getString("wand_address", null),
             batteryPercent = batteryPercent(s),
@@ -303,6 +399,9 @@ class BastaoController private constructor(private val app: Context) : BleClient
     companion object {
         /** Leitura com mais de 3 s de idade veio da fila offline do bastão. */
         private const val RECOVERED_AFTER_MS = 3_000L
+
+        /** Mesmo número repetido por um bastão comercial dentro deste intervalo é a mesma leitura. */
+        private const val REPETICAO_MS = 3_000L
 
         @Volatile private var instance: BastaoController? = null
 

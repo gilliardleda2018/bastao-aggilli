@@ -49,3 +49,52 @@ R$ 1.050). Para começar na bancada: leitores, ESP32 e adaptador USB-TTL, cerca 
 | 27 | Multímetro, ferro de solda, fonte de bancada | 1 | |
 
 O suporte de celular na haste saiu do projeto na v0.3: o celular fica no bolso.
+
+## Onde comprar
+
+Links pesquisados em outubro de 2026 em lojas brasileiras (também na coluna `link_compra` de
+`hardware/bom.csv`). Estoque e preço mudam: confira antes de fechar. Concentrar a compra na
+Eletrogate e na Usinainfo economiza frete.
+
+### Etapa 1: bancada
+
+| Item | Onde | Atenção |
+|---|---|---|
+| ESP32 DevKit 38 pinos (×2) | [Usinainfo: DevKitC V4 WROOM-32D](https://www.usinainfo.com.br/esp32/esp32-devkitc-v4-wroom-32d-38-pinos-cp2102-micro-usb-8682.html) · [WROOM-32E](https://www.usinainfo.com.br/esp32/esp32-wroom-32e-wifi-e-bluetooth-38-pinos-com-cp2102-9109.html) | Placa com USB e duas fileiras de pinos. **Não** o módulo WROOM avulso (sem USB), nem C3/S2/S3/C6 |
+| Leitor WL-134 + antenas (×2) | [Eletrônica da China: WL134A 5–9 V](https://eletronicadachina.com.br/produto/universal-1342khz-leitor-rfid-modulo-fdx-b-hdx-iso1784-85-tag-tubo-de-vidro-antena-sem-fio-modulo-wl134a-5v-9v) | Confirmar que vem com as antenas e saída TTL |
+| Adaptador USB-TTL CP2102 | [Usinainfo: CP2102 3,3 V e 5 V](https://www.usinainfo.com.br/conversores-de-sinal/modulo-conversor-usb-para-ttl-cp2102--4470.html) | |
+| Protoboard 830 + jumpers | [MakerHero: Kit Protoboard Intermediate](https://www.makerhero.com/produto/kit-protoboard-intermediate/) | Fora da BOM original; vem com jumpers macho-fêmea. Para testar antes de soldar |
+
+### Etapa 2: eletrônica
+
+| Item | Onde | Atenção |
+|---|---|---|
+| Display OLED 1,3" SH1106 | [Mercado Livre: 1.3" SH1106 I2C](https://produto.mercadolivre.com.br/MLB-1562271568-13-branco-sh1106-iic-i2c-serial-128x64-oled-lcd-display-scr-_JM) · [Curto Circuito](https://curtocircuito.com.br/display-oled-128x64-px-1-3-4-pin-azul.html) | Tem que ser 1,3" SH1106. O de 0,96" (SSD1306) não serve sem mudar o firmware |
+| Módulo microSD 3,3 V | [Usinainfo: mini leitor microSD SPI 3,3 V](https://www.usinainfo.com.br/memorias-e-armazenamento/mini-sd-card-esp32-mini-leitor-micro-sd-card-esp32-5051.html) | |
+| Cartão microSD 8–32 GB | Qualquer SanDisk ou Kingston classe 10 | Formatar em FAT32 |
+| Bateria 18650 Samsung 25R (×2) | [Mercado Livre: Samsung 25R](https://produto.mercadolivre.com.br/MLB-1874762222-bateria-samsung-18650-25r-36v-2500mah-inr18650-original-_JM) | Muita falsificação: vendedor com boa reputação |
+| Suporte 2× 18650 | [Usinainfo: suporte 2× 18650](https://www.usinainfo.com.br/suporte-para-pilhas/suporte-para-2-baterias-18650-litio-5073.html) | Quase todo suporte duplo vem **em série** (7,4 V). Medir; o projeto usa **paralelo** (3,7 V) |
+| Carregador TP4056 USB-C | [Curto Circuito: TP4056 USB-C com proteção](https://curtocircuito.com.br/carregador-bateria-lithium-1a-com-protecao-usb-c-tp4056.html) | Na foto, além do TP4056, os chips DW01A e 8205A |
+| Step-up MT3608 (×2) | [Eletrogate: MT3608](https://www.eletrogate.com/regulador-de-tensao-ajustavel-mt3608-auto-boost-step-up) | |
+| Chave liga/desliga | [Eletrogate: mini gangorra KCD11](https://www.eletrogate.com/mini-chave-gangorra-2-terminais) | |
+| Gatilho (micro switch) | [Baú da Eletrônica: KW10-B com haste](https://www.baudaeletronica.com.br/produto/chave-micro-switch-kw10-b-com-haste.html) | |
+| Buzzer ativo 5 V | [Eletrogate: buzzer ativo 5 V](https://www.eletrogate.com/buzzer-ativo-5v) | Ativo, não passivo |
+| Motor de vibração moeda | [Usinainfo: vibracall redondo MV30](https://www.usinainfo.com.br/motor-dc/motor-vibracall-redondo-para-projetos-maker-diy-mv30-5593.html) | |
+| BC547 (×2) | [Eletrogate: BC547](https://www.eletrogate.com/transistor-npn-bc547) | |
+| 1N4148 | [Eletrogate: 1N4148](https://www.eletrogate.com/diodo-1n4148) | |
+| Resistores | [Eletrogate: kit 525 resistores](https://www.eletrogate.com/kit-525-resistores-17-valores) | Conferir se tem 100k, 22k, 12k, 10k, 1k e 330 Ω |
+| Capacitor 470 µF 16 V | [Usinainfo: 470 µF 16 V](https://www.usinainfo.com.br/capacitor-eletrolitico/capacitor-eletrolitico-470uf-16v-kit-com-10-unidades-3054.html) | |
+| Capacitor 100 nF | [Eletrogate: cerâmico 100 nF](https://www.eletrogate.com/capacitor-disco-ceramico-100nf-x-50v) | Marcação "104" |
+| Placa perfurada | [Eletrogate: fenolite 10×10 cm](https://www.eletrogate.com/placa-fenolite-perfurada-10x10cm) | |
+| Barra de pinos fêmea | [Eletrogate: barra fêmea 1×40](https://www.eletrogate.com/barra-de-pinos-femea-1x40-180) | Duas, para encaixar o ESP32 |
+| Termorretrátil | [Eletrogate: kit 328 peças](https://www.eletrogate.com/kit-tubo-termo-retratil-com-328-unidades-em-5-cores) | |
+| Fio 22 ou 20 AWG | Loja de material elétrico | Vermelho e preto, flexível |
+
+### Etapa 3: mecânica
+
+| Item | Onde | Atenção |
+|---|---|---|
+| Caixa da empunhadura | [Mercado Livre: caixa IP65 140×100×60 mm](https://www.mercadolivre.com.br/kit-com-10-caixas-ip65-branca-140x100x60mm-proteco-externa/p/MLB42124685) | Patola PBL-150 não encontrada à venda; esta tem medida próxima e borracha na tampa (kit de 10) |
+| Haste | Cano de PVC 25 mm, loja de material de construção | Protótipo. Sem alumínio na ponteira e nos 15 cm finais (ver `docs/11-guia-de-montagem.pdf`) |
+| Prensa-cabo PG7 | [Eletrogate: PG7](https://www.eletrogate.com/prensa-cabo-pg7-branco) | |
+| Ponteira, silicone, M3 inox, policarbonato | Ferragem / material de construção | Tampa de PVC 25 mm + epóxi |

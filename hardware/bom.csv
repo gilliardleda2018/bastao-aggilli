@@ -1,27 +1,28 @@
-item,descricao,qtd,observacao,preco_ref_brl,fonte_preco
-1,Modulo leitor RFID FDX-B 134.2kHz TTL (WL-134/WL134A 5-9V) com antenas,1,+1 reserva; 9600 baud; pacote 30 bytes,173.61,Eletronica da China (verificado)
-2,ESP32 DevKit 38 pinos (ESP32-WROOM-32),1,+1 reserva; nao usar C3/S2,55.00,mediana WJ/Vamuino/Tarzan (verificado)
-3,Display OLED 1.3in SH1106 128x64 I2C,1,4 pinos,39.99,Testando Tecnologias (verificado)
-4,Modulo leitor de cartao microSD SPI 3.3V,1,,10.00,estimativa
-5,Cartao microSD 8-32GB classe 10 (FAT32),1,,30.00,estimativa
-6,Bateria 18650 com protecao (Samsung 25R 2500mAh),2,mesma tensao antes de unir,89.64,Distribuidora de CFTV (verificado)
-7,Suporte 2x18650 em paralelo,1,,10.00,estimativa
-8,Carregador TP4056 USB-C com protecao,1,DW01 + 8205A,4.90,Eletrogate (verificado)
-9,Conversor step-up MT3608,2,A: 9.0V (ou 5.0V) leitor; B: 5.0V ESP32,6.00,estimativa
-10,Chave liga/desliga mini 2A,1,,4.00,estimativa
-11,Micro switch com alavanca (gatilho),1,,3.00,estimativa
-12,Buzzer ativo 5V,1,,4.00,estimativa
-13,Motor de vibracao moeda 3V,1,,6.00,estimativa
-14,LED 5mm,1,opcional,0.50,estimativa
-15,Transistor NPN BC547,2,buzzer e vibracao,0.50,estimativa
-16,Diodo 1N4148,1,roda livre do motor,0.30,estimativa
-17,Kit resistores (100k x2; 10k; 20k ou 22k+12k; 1k x2; 330R),1,,10.00,estimativa
-18,Capacitores 470uF/16V x2 e 100nF x4,1,,5.00,estimativa
-19,Placa perfurada + barra de pinos femea + fio 22AWG + JST + termorretratil,1,,40.00,estimativa
-20,Caixa Patola PBL-150 IP65 (150x100x60mm),1,empunhadura do prototipo,75.23,Eletrodex (verificado)
-21,Tubo de fibra de vidro 20-25mm 1m,1,PVC serve no prototipo,45.00,estimativa
-22,Ponteira nao metalica selada (ASA ou PVC + epoxi),1,,20.00,estimativa
-23,Prensa-cabo PG7 + parafusos inox M3 + silicone + janela policarbonato,1,,25.00,estimativa
-24,Adaptador USB-TTL CP2102 3.3V,1,bancada,32.90,Mercado Livre (verificado)
-25,Brincos FDX-B do rebanho (amostra),10,pedir a fazenda,0,
-26,Celular Android 8.0+ com BLE,1,do operador,0,
+item,descricao,qtd,observacao,preco_ref_brl,fonte_preco,link_compra
+1,Modulo leitor RFID FDX-B 134.2kHz TTL (WL-134/WL134A 5-9V) com antenas,1,+1 reserva; 9600 baud; pacote 30 bytes,173.61,Eletronica da China (verificado),https://eletronicadachina.com.br/produto/universal-1342khz-leitor-rfid-modulo-fdx-b-hdx-iso1784-85-tag-tubo-de-vidro-antena-sem-fio-modulo-wl134a-5v-9v
+2,ESP32 DevKit 38 pinos (ESP32-WROOM-32),1,+1 reserva; nao usar C3/S2,55.00,mediana WJ/Vamuino/Tarzan (verificado),https://www.usinainfo.com.br/esp32/esp32-devkitc-v4-wroom-32d-38-pinos-cp2102-micro-usb-8682.html
+3,Display OLED 1.3in SH1106 128x64 I2C,1,4 pinos,39.99,Testando Tecnologias (verificado),https://produto.mercadolivre.com.br/MLB-1562271568-13-branco-sh1106-iic-i2c-serial-128x64-oled-lcd-display-scr-_JM
+4,Modulo leitor de cartao microSD SPI 3.3V,1,,10.00,estimativa,https://www.usinainfo.com.br/memorias-e-armazenamento/mini-sd-card-esp32-mini-leitor-micro-sd-card-esp32-5051.html
+5,Cartao microSD 8-32GB classe 10 (FAT32),1,,30.00,estimativa,
+6,Bateria 18650 com protecao (Samsung 25R 2500mAh),2,mesma tensao antes de unir,89.64,Distribuidora de CFTV (verificado),https://produto.mercadolivre.com.br/MLB-1874762222-bateria-samsung-18650-25r-36v-2500mah-inr18650-original-_JM
+7,Suporte 2x18650 em paralelo,1,,10.00,estimativa,https://www.usinainfo.com.br/suporte-para-pilhas/suporte-para-2-baterias-18650-litio-5073.html
+8,Carregador TP4056 USB-C com protecao,1,DW01 + 8205A,4.90,Eletrogate (verificado),https://curtocircuito.com.br/carregador-bateria-lithium-1a-com-protecao-usb-c-tp4056.html
+9,Conversor step-up MT3608,2,A: 9.0V (ou 5.0V) leitor; B: 5.0V ESP32,6.00,estimativa,https://www.eletrogate.com/regulador-de-tensao-ajustavel-mt3608-auto-boost-step-up
+10,Chave liga/desliga mini 2A,1,,4.00,estimativa,https://www.eletrogate.com/mini-chave-gangorra-2-terminais
+11,Micro switch com alavanca (gatilho),1,,3.00,estimativa,https://www.baudaeletronica.com.br/produto/chave-micro-switch-kw10-b-com-haste.html
+12,Buzzer ativo 5V,1,,4.00,estimativa,https://www.eletrogate.com/buzzer-ativo-5v
+13,Motor de vibracao moeda 3V,1,,6.00,estimativa,https://www.usinainfo.com.br/motor-dc/motor-vibracall-redondo-para-projetos-maker-diy-mv30-5593.html
+14,LED 5mm,1,opcional,0.50,estimativa,
+15,Transistor NPN BC547,2,buzzer e vibracao,0.50,estimativa,https://www.eletrogate.com/transistor-npn-bc547
+16,Diodo 1N4148,1,roda livre do motor,0.30,estimativa,https://www.eletrogate.com/diodo-1n4148
+17,Kit resistores (100k x2; 10k; 20k ou 22k+12k; 1k x2; 330R),1,,10.00,estimativa,https://www.eletrogate.com/kit-525-resistores-17-valores
+18,Capacitores 470uF/16V x2 e 100nF x4,1,,5.00,estimativa,https://www.usinainfo.com.br/capacitor-eletrolitico/capacitor-eletrolitico-470uf-16v-kit-com-10-unidades-3054.html
+19,Placa perfurada + barra de pinos femea + fio 22AWG + JST + termorretratil,1,,40.00,estimativa,https://www.eletrogate.com/placa-fenolite-perfurada-10x10cm
+20,Caixa Patola PBL-150 IP65 (150x100x60mm),1,empunhadura do prototipo,75.23,Eletrodex (verificado),https://www.mercadolivre.com.br/kit-com-10-caixas-ip65-branca-140x100x60mm-proteco-externa/p/MLB42124685
+21,Tubo de fibra de vidro 20-25mm 1m,1,PVC serve no prototipo,45.00,estimativa,
+22,Ponteira nao metalica selada (ASA ou PVC + epoxi),1,,20.00,estimativa,
+23,Prensa-cabo PG7 + parafusos inox M3 + silicone + janela policarbonato,1,,25.00,estimativa,https://www.eletrogate.com/prensa-cabo-pg7-branco
+24,Adaptador USB-TTL CP2102 3.3V,1,bancada,32.90,Mercado Livre (verificado),https://www.usinainfo.com.br/conversores-de-sinal/modulo-conversor-usb-para-ttl-cp2102--4470.html
+25,Brincos FDX-B do rebanho (amostra),10,pedir a fazenda,0,,
+26,Celular Android 8.0+ com BLE,1,do operador,0,,
+27,Protoboard 830 pontos + jumpers macho-macho e macho-femea,1,bancada; testar antes de soldar,,,https://www.makerhero.com/produto/kit-protoboard-intermediate/

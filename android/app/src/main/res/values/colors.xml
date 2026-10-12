@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cores da marca Aggilli (tiradas do logo). As do Compose ficam em ui/Theme.kt. -->
+<resources>
+    <color name="ic_launcher_background">#FFFFFF</color>
+    <color name="aggilli_azul">#0B6E96</color>
+    <color name="aggilli_azul_escuro">#08506E</color>
+    <color name="aggilli_verde">#2E7D16</color>
+</resources>

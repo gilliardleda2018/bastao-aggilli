@@ -10,6 +10,25 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
+import br.com.aggilli.bastao.ui.Aggilli
+import br.com.aggilli.bastao.ui.AggilliTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -69,7 +88,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         setContent {
-            MaterialTheme {
+            AggilliTheme {
                 Screen(
                     vm = vm,
                     onConnect = ::onConnectClicked,
@@ -147,101 +166,204 @@ fun Screen(vm: MainViewModel, onConnect: () -> Unit, onPick: () -> Unit, onExpor
             onRescan = onPick, onDismiss = { vm.stopDiscovery(); showPicker = false })
     }
 
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            // Bastão
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+        contentPadding = PaddingValues(bottom = 24.dp),
+    ) {
+        item { Cabecalho(s) }
+        item {
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                s.message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                if (s.wandPending > 0 && s.conn == BleClient.ConnState.CONNECTED) {
+                    Text("Recebendo ${s.wandPending} leitura(s) guardada(s) no bastão…", color = MaterialTheme.colorScheme.primary)
+                }
+                UltimoBrinco(s)
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Numero("Animais na sessão", s.total.toString(), Modifier.weight(1f), destaque = true)
+                    Numero("Sessão", s.session, Modifier.weight(1f))
+                }
+
+                Button(
+                    onClick = onConnect,
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    shape = RoundedCornerShape(14.dp),
+                ) { Text(if (s.active) "Desconectar" else "Conectar ao bastão", fontWeight = FontWeight.SemiBold) }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilledTonalButton(onClick = { onPick(); showPicker = true }, modifier = Modifier.weight(1f)) { Text("Escolher") }
+                    FilledTonalButton(onClick = { vm.startNewSession() }, modifier = Modifier.weight(1f)) { Text("Nova sessão") }
+                    FilledTonalButton(onClick = onExport, modifier = Modifier.weight(1f)) { Text("Exportar") }
+                }
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val connected = s.conn == BleClient.ConnState.CONNECTED
+                    OutlinedButton(onClick = { vm.beepWand() }, enabled = connected) { Text("Bip") }
+                    OutlinedButton(onClick = { vm.setTriggerMode(s.triggerMode != 1) }, enabled = connected) {
+                        Text(if (s.triggerMode == 1) "Modo: gatilho" else "Modo: contínuo")
+                    }
+                    Spacer(Modifier.weight(1f))
+                    Text("Voz")
+                    Switch(checked = s.voice, onCheckedChange = { vm.setVoice(it) })
+                }
+
+                // Sincronização com o Aggilli Agro
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(start = 14.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Aggilli Agro", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                            Text(syncLabel(s), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                            s.syncError?.let {
+                                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                        TextButton(onClick = { vm.syncNow() }, enabled = s.syncConfigured) { Text("Enviar") }
+                        TextButton(onClick = { showSyncConfig = true }) { Text("Configurar") }
+                    }
+                }
+
+                Text(
+                    "LEITURAS DESTA SESSÃO",
+                    style = MaterialTheme.typography.labelMedium,
+                    letterSpacing = 1.2.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+        }
+        items(s.readings, key = { it.id }) { r ->
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(connLabel(s), fontWeight = FontWeight.Bold)
-                    Text(s.wandName ?: "Nenhum bastão escolhido", style = MaterialTheme.typography.bodySmall)
-                }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(s.batteryPercent?.let { "Bateria $it%" } ?: "Bateria --")
-                    sdLabel(s.sdState)?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                Text(formatarBrinco(r.tag), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Medium)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(timeFormat.format(Date(r.timestamp)), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (r.synced) Text("  ✓", color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold)
                 }
             }
-            s.message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            if (s.wandPending > 0 && s.conn == BleClient.ConnState.CONNECTED) {
-                Text("Recebendo ${s.wandPending} leitura(s) guardada(s) no bastão…")
-            }
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.surfaceVariant)
+        }
+    }
+}
 
-            // Último brinco
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(14.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text("Último brinco", style = MaterialTheme.typography.labelLarge)
-                    Text(text = s.lastTag ?: "—", fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                    if (s.lastWasDuplicate) Text("Já lido nesta sessão", color = MaterialTheme.colorScheme.error)
-                }
-            }
-
-            Text("Sessão ${s.session}  •  ${s.total} animais")
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = onConnect) { Text(if (s.active) "Desconectar" else "Conectar") }
-                OutlinedButton(onClick = { onPick(); showPicker = true }) { Text("Escolher bastão") }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { vm.startNewSession() }) { Text("Nova sessão") }
-                OutlinedButton(onClick = onExport) { Text("Exportar") }
-            }
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
+/** Faixa azul do topo: a marca Aggilli, o bastão escolhido e o estado da conexão. */
+@Composable
+private fun Cabecalho(s: UiState) {
+    val estado = when (s.conn) {
+        BleClient.ConnState.CONNECTED -> Aggilli.Ok
+        BleClient.ConnState.DISCONNECTED -> Aggilli.Parado
+        else -> Aggilli.Andamento
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Brush.horizontalGradient(listOf(Aggilli.AzulEscuro, Aggilli.Azul)))
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier.size(46.dp).clip(CircleShape).background(Color.White),
+                contentAlignment = Alignment.Center,
             ) {
-                val connected = s.conn == BleClient.ConnState.CONNECTED
-                OutlinedButton(onClick = { vm.beepWand() }, enabled = connected) { Text("Bip") }
-                OutlinedButton(onClick = { vm.setTriggerMode(s.triggerMode != 1) }, enabled = connected) {
-                    Text(if (s.triggerMode == 1) "Modo: gatilho" else "Modo: contínuo")
-                }
-                Switch(checked = s.voice, onCheckedChange = { vm.setVoice(it) })
-                Text("Voz")
+                Image(painterResource(R.drawable.ic_aggilli_mark), contentDescription = "Aggilli", modifier = Modifier.size(34.dp))
             }
-
-            // Sincronização com o Aggilli Agro
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Aggilli Agro", fontWeight = FontWeight.Bold)
-                        Text(syncLabel(s), style = MaterialTheme.typography.bodySmall)
-                        s.syncError?.let {
-                            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                        }
-                    }
-                    TextButton(onClick = { vm.syncNow() }, enabled = s.syncConfigured) { Text("Enviar") }
-                    TextButton(onClick = { showSyncConfig = true }) { Text("Configurar") }
-                }
+            Column(modifier = Modifier.padding(start = 12.dp).weight(1f)) {
+                Text("AGGILLI", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, letterSpacing = 1.5.sp)
+                Text(
+                    "AGRO · coleta de brincos", color = Color(0xFFB8E89C), fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.sp, letterSpacing = 1.sp,
+                )
             }
-
-            HorizontalDivider()
-
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(s.readings, key = { it.id }) { r ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Text(r.tag, fontWeight = FontWeight.Medium)
-                        Text(timeFormat.format(Date(r.timestamp)) + if (r.synced) " ✓" else "")
-                    }
-                    HorizontalDivider()
-                }
+            Surface(shape = RoundedCornerShape(50), color = estado) {
+                Text(
+                    connLabel(s), color = Color.White, style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                )
+            }
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color.White.copy(alpha = 0.12f))
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                s.wandName ?: "Nenhum bastão escolhido", color = Color.White, fontWeight = FontWeight.Medium,
+                modifier = Modifier.weight(1f),
+            )
+            Text(s.batteryPercent?.let { "Bateria $it%" } ?: "Bateria --", color = Color.White, style = MaterialTheme.typography.bodySmall)
+            sdLabel(s.sdState)?.let {
+                Text("  ·  $it", color = Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.bodySmall)
             }
         }
     }
 }
+
+/** O cartão grande: o brinco que acabou de ser lido, ou o aviso de repetido. */
+@Composable
+private fun UltimoBrinco(s: UiState) {
+    val repetido = s.lastWasDuplicate
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (repetido) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer,
+        ),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 18.dp, horizontal = 14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            val cor = if (repetido) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer
+            Text("ÚLTIMO BRINCO", style = MaterialTheme.typography.labelMedium, letterSpacing = 1.2.sp, color = cor)
+            Text(
+                text = s.lastTag?.let(::formatarBrinco) ?: "—",
+                fontSize = 30.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, color = cor,
+            )
+            if (repetido) Text("REPETIDO · já lido nesta sessão", color = cor, fontWeight = FontWeight.SemiBold)
+        }
+    }
+}
+
+@Composable
+private fun Numero(rotulo: String, valor: String, modifier: Modifier = Modifier, destaque: Boolean = false) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant),
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+            Text(rotulo, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                valor,
+                fontSize = if (destaque) 28.sp else 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (destaque) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
+/** 076000000001234 -> "076 000000001234": país (3 dígitos) e número nacional, como no brinco. */
+private fun formatarBrinco(tag: String): String =
+    if (tag.length == 15 && tag.all { it.isDigit() }) tag.substring(0, 3) + " " + tag.substring(3) else tag
 
 @Composable
 fun WandPickerDialog(

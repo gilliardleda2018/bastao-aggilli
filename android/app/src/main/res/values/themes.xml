@@ -1,3 +1,8 @@
 <resources>
-    <style name="Theme.Bastao" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Barras do sistema no azul da marca; o conteúdo é todo em Compose (ui/Theme.kt). -->
+    <style name="Theme.Bastao" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@color/aggilli_azul_escuro</item>
+        <item name="android:navigationBarColor">@color/aggilli_azul_escuro</item>
+        <item name="android:windowBackground">@android:color/white</item>
+    </style>
 </resources>

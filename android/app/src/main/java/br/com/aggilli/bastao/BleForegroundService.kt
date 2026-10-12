@@ -79,7 +79,8 @@ class BleForegroundService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
+            .setSmallIcon(R.drawable.ic_stat_bastao)
+            .setColor(getColor(R.color.aggilli_azul))
             .setContentTitle(title)
             .setContentText(text)
             .setOngoing(true)

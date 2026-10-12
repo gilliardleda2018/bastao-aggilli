@@ -49,3 +49,19 @@ Para distribuir: **Build > Generate Signed Bundle / APK**.
 - A sincronização só aceita endereço `https://`.
 - Código verificado em sintaxe, **ainda não compilado** no Android Studio: espere pequenos ajustes de
   versões de dependências no primeiro build.
+
+## Bastões compatíveis
+
+| Bastão | Como conecta | Como usar no app |
+|---|---|---|
+| **Bastão Aggilli** (este projeto) | BLE, protocolo próprio (`docs/04`) | Escolher → "Bastão Aggilli" → Procurar. Tem fila offline, bateria, bip e modo |
+| **Allflex** RS420, AWR250, LPR | Bluetooth clássico, perfil serial (SPP) | Parear no Android (PIN 0000 ou 1234) → Escolher → "Outras marcas" |
+| **Datamars / Tru-Test** XRS2, XRS2i | SPP no modo Bluetooth padrão | Igual ao Allflex |
+| **Gallagher** HR4, HR5 | SPP (no HR5 v3, escolher o perfil SPP no menu do bastão) | Igual ao Allflex |
+| Qualquer bastão no **modo teclado (HID)** | O bastão "digita" o número | Tocar no campo "Digitar brinco" antes de ler |
+
+Os fabricantes não publicam o formato exato do texto que enviam. O app procura o número de 15
+dígitos (ISO 11784) em cada linha: aceita espaço, ponto ou hífen depois do país, prefixo de tipo
+(FDX-B, HDX) e data e hora junto (`leitor/EidParser.kt`, testes em `src/test`). Se um modelo mandar
+num formato que não é reconhecido, o número não entra: anote o texto que o bastão envia (um app de
+terminal Bluetooth serial mostra) e acrescente o caso nos testes.

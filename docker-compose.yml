@@ -1,0 +1,51 @@
+# CI local: roda no Docker o mesmo que o GitHub Actions (.github/workflows/ci.yml).
+#   .\testar-tudo.ps1                      -> todas as etapas, com resumo no final
+#   docker compose run --rm firmware-testes -> uma etapa só
+#   docker compose --profile servidor up api -> receptor da API ligado em http://localhost:8080
+# O código entra só para leitura; firmware .bin e APK saem na pasta saida/ (ignorada pelo Git).
+
+services:
+  firmware-testes:
+    image: gcc:13
+    volumes: [".:/src:ro"]
+    command: sh -c "cp -r /src/firmware /work && make -C /work/test_host"
+
+  firmware:
+    build: { context: docker, dockerfile: firmware.Dockerfile }
+    volumes: [".:/src:ro", "./saida/firmware:/saida", "pio-cache:/root/.platformio"]
+    command: >
+      sh -c "cp -r /src/firmware /work && rm -rf /work/.pio && cd /work && pio run
+      && cp .pio/build/esp32dev/firmware.bin .pio/build/esp32dev/bootloader.bin .pio/build/esp32dev/partitions.bin /saida/"
+
+  integracao:
+    image: python:3.11-slim
+    volumes: [".:/src:ro"]
+    working_dir: /src
+    environment: { PYTHONDONTWRITEBYTECODE: "1" }
+    command: >
+      sh -c "python -m unittest integracao/test_bastao_api.py -v
+      && python tools/simulate_tag.py --stdout --ids 076000000001234 982000123456789"
+
+  android:
+    build: { context: docker, dockerfile: android.Dockerfile }
+    volumes: [".:/src:ro", "./saida/apk:/saida", "gradle-cache:/cache/gradle"]
+    environment: { GRADLE_USER_HOME: /cache/gradle }
+    command: >
+      sh -c "cp -r /src/android /work && cd /work && rm -rf app/build .gradle
+      && echo sdk.dir=$$ANDROID_HOME > local.properties
+      && gradle assembleDebug --no-daemon && cp app/build/outputs/apk/debug/*.apk /saida/"
+
+  # Receptor de teste, para o app no celular sincronizar de verdade (mesma rede Wi-Fi do PC).
+  api:
+    profiles: [servidor]
+    image: python:3.11-slim
+    volumes: [".:/src:ro", "api-dados:/dados"]
+    ports: ["8080:8080"]
+    command: >
+      python /src/integracao/bastao_api.py --porta 8080 --banco /dados/bastao.db
+      --token token-de-teste --fazenda fazenda-teste
+
+volumes:
+  pio-cache:
+  gradle-cache:
+  api-dados:

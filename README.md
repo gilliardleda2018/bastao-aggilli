@@ -46,6 +46,7 @@ Brinco -> [Ponteira: antena + leitor FDX-B] -UART-> [Empunhadura: ESP32] -BLE-> 
 | [08 Integração com o Aggilli Agro](docs/08-integracao-aggilli-agro.md) | Backend |
 | [09 Manual do operador](docs/09-manual-do-operador.md) | Quem usa no curral |
 | [10 Produção, custo e preço](docs/10-producao-e-preco.md) | Comercial |
+| [11 Guia de montagem ilustrado (PDF)](docs/11-guia-de-montagem.pdf) | Primeira montagem, passo a passo |
 | [Firmware](firmware/README.md) · [App](android/README.md) · [Histórico de versões](CHANGELOG.md) | Desenvolvimento |
 
 ## Por onde começar
@@ -67,6 +68,19 @@ A cada push, o GitHub compila e testa tudo (`.github/workflows/ci.yml`):
 | Receptor da API | Testes do receptor e do simulador | — |
 
 Os arquivos ficam na aba **Actions** do repositório, dentro de cada execução, em **Artifacts**.
+
+## Testes no Docker (sem GitHub)
+
+As mesmas etapas rodam no computador com Docker (`docker-compose.yml`). No Windows:
+
+```powershell
+.\testar-tudo.ps1                    # todas as etapas, com resumo no final
+.\testar-tudo.ps1 firmware-testes    # uma etapa só
+docker compose --profile servidor up api   # receptor da API em http://localhost:8080
+```
+
+O firmware (`.bin`) e o APK saem em `saida/`. A primeira execução demora (baixa o compilador do
+ESP32 e o SDK do Android); as seguintes usam o cache do Docker.
 
 ## Status (v0.3.0)
 

@@ -17,3 +17,5 @@ __pycache__/
 # Testes
 firmware/test_host/test_core
 integracao/*.db
+# CI local (docker compose)
+saida/
